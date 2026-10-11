@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Photo Gallery - Live Location Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/1.0.2/css/bulma.min.css">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #0f141c;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --accent-primary: #58a6ff;
+            --accent-hover: #79c0ff;
+            --success-color: #238636;
+            --success-hover: #2ea043;
+            --danger-color: #da3633;
+            --danger-hover: #f85149;
+            --btn-bg: #21262d;
+            --btn-border: #30363d;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Header Navigation */
+        .header-bar {
+            background-color: #161b22;
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0.85rem 1.25rem;
+            flex-wrap: wrap;
+            gap: 0.85rem;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .btn-back-dashboard {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.4rem 0.85rem;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back-dashboard:hover {
+            background: #30363d;
+            color: #58a6ff;
+            border-color: #58a6ff;
+        }
+
+        .header-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.76rem;
+            color: #4ade80;
+            background: rgba(35, 134, 54, 0.18);
+            border: 1px solid rgba(46, 160, 67, 0.35);
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            background: #4ade80;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px rgba(74, 222, 128, 0.6);
+        }
+
+        /* Stats & Controls Hero */
+        .gallery-hero {
+            background: #161b22;
+            border-bottom: 1px solid #21262d;
+            padding: 1.5rem 1.25rem;
+        }
+
+        .gallery-hero-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.25rem;
+        }
+
+        .hero-info h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f0f6fc;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hero-info p {
+            color: #8b949e;
+            font-size: 0.88rem;
+            margin: 0;
+        }
+
+        /* Metrics Chips */
+        .metrics-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .metric-pill {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 0.45rem 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+        }
+
+        .metric-pill-label {
+            color: #8b949e;
+            font-weight: 500;
+        }
+
+        .metric-pill-value {
+            color: #58a6ff;
+            font-weight: 700;
+        }
+
+        /* Control Toolbar */
+        .toolbar-container {
+            max-width: 1400px;
+            margin: 1.25rem auto 0.5rem auto;
+            padding: 0 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.85rem;
+        }
+
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #f0f6fc;
+            font-size: 0.82rem;
+            padding: 0.4rem 0.75rem;
+            outline: none;
+            width: 220px;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-box:focus {
+            border-color: #58a6ff;
+        }
+
+        .select-filter {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #f0f6fc;
+            font-size: 0.82rem;
+            padding: 0.4rem 0.75rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .select-filter:focus {
+            border-color: #58a6ff;
+        }
+
+        .btn-refresh {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #58a6ff;
+            font-weight: 600;
+            font-size: 0.84rem;
+            padding: 0.45rem 0.95rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-refresh:hover {
+            background: #30363d;
+            color: #79c0ff;
+            border-color: #58a6ff;
+        }
+
+        .btn-refresh.is-spinning svg {
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Gallery Main Grid */
+        .gallery-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.25rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1.35rem;
+        }
+
+        /* Photo Card */
+        .photo-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.22s ease;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .photo-card:hover {
+            border-color: #58a6ff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+        }
+
+        .photo-thumb-container {
+            width: 100%;
+            height: 200px;
+            background: #0d1117;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-thumb-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.25s ease;
+            display: block;
+        }
+
+        .photo-thumb-container:hover .photo-thumb-img {
+            transform: scale(1.04);
+        }
+
+        .thumb-hover-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(13, 17, 23, 0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            color: #ffffff;
+            font-size: 0.88rem;
+            font-weight: 600;
+            gap: 0.4rem;
+        }
+
+        .photo-thumb-container:hover .thumb-hover-overlay {
+            opacity: 1;
+        }
+
+        .photo-format-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(13, 17, 23, 0.85);
+            border: 1px solid rgba(48, 54, 61, 0.85);
+            backdrop-filter: blur(4px);
+            color: #c9d1d9;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* Card Content */
+        .photo-card-body {
+            padding: 1rem 1.15rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            flex: 1;
+        }
+
+        .photo-filename-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        .photo-filename {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 0.78rem;
+            color: #58a6ff;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 220px;
+        }
+
+        .btn-copy-name {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            padding: 0.2rem;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.15s ease;
+        }
+
+        .btn-copy-name:hover {
+            color: #f0f6fc;
+        }
+
+        .meta-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            font-size: 0.78rem;
+            color: #8b949e;
+            border-top: 1px solid #21262d;
+            padding-top: 0.55rem;
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .meta-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #8b949e;
+        }
+
+        .meta-val {
+            color: #c9d1d9;
+            font-weight: 500;
+        }
+
+        /* Card Actions */
+        .photo-card-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.75rem 1.15rem;
+            border-top: 1px solid #21262d;
+            background: rgba(13, 17, 23, 0.4);
+        }
+
+        .btn-action-preview {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #58a6ff;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action-preview:hover {
+            background: #30363d;
+            color: #79c0ff;
+            border-color: #58a6ff;
+        }
+
+        .btn-action-download {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action-download:hover {
+            background: #30363d;
+            color: #f0f6fc;
+        }
+
+        .btn-action-delete {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.35rem 0.7rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s ease;
+            margin-left: auto;
+        }
+
+        .btn-action-delete:hover {
+            background: rgba(248, 81, 73, 0.15);
+            border-color: rgba(248, 81, 73, 0.45);
+            color: #f85149;
+        }
+
+        /* States: Loading, Empty, Error */
+        .state-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 1.5rem;
+            text-align: center;
+            border: 1px dashed #30363d;
+            border-radius: 14px;
+            background: rgba(22, 27, 34, 0.5);
+            margin-top: 1rem;
+        }
+
+        .state-icon-box {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.15rem;
+            color: #8b949e;
+        }
+
+        .state-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #f0f6fc;
+            margin-bottom: 0.45rem;
+        }
+
+        .state-desc {
+            font-size: 0.88rem;
+            color: #8b949e;
+            max-width: 480px;
+            line-height: 1.5;
+            margin-bottom: 1.25rem;
+        }
+
+        .spinner-circle {
+            width: 38px;
+            height: 38px;
+            border: 3px solid rgba(88, 166, 255, 0.2);
+            border-top-color: #58a6ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        /* Full-Size Preview Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(1, 4, 9, 0.85);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-overlay.is-active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .preview-modal-box {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 960px;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            animation: modalScale 0.2s ease;
+        }
+
+        @keyframes modalScale {
+            from { transform: scale(0.96); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .preview-modal-header {
+            padding: 0.95rem 1.25rem;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #161b22;
+        }
+
+        .preview-title-box {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            overflow: hidden;
+        }
+
+        .preview-filename {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #f0f6fc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 480px;
+        }
+
+        .btn-modal-close {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0 0.35rem;
+            line-height: 1;
+            transition: color 0.15s ease;
+        }
+
+        .btn-modal-close:hover {
+            color: #ffffff;
+        }
+
+        .preview-modal-body {
+            background: #0d1117;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            flex: 1;
+            min-height: 320px;
+        }
+
+        .preview-full-img {
+            max-width: 100%;
+            max-height: 60vh;
+            object-fit: contain;
+            border-radius: 6px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .preview-modal-footer {
+            padding: 0.95rem 1.25rem;
+            border-top: 1px solid #30363d;
+            background: #161b22;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.85rem;
+        }
+
+        .preview-meta-chips {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+            font-size: 0.78rem;
+            color: #8b949e;
+        }
+
+        .preview-meta-item {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.25rem 0.6rem;
+            color: #c9d1d9;
+        }
+
+        .preview-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        /* Delete Confirmation Modal */
+        .confirm-modal-box {
+            background: #161b22;
+            border: 1px solid rgba(248, 81, 73, 0.45);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 20px rgba(218, 54, 51, 0.2);
+            animation: modalScale 0.2s ease;
+        }
+
+        .confirm-modal-header {
+            padding: 1.15rem 1.35rem;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(218, 54, 51, 0.08);
+        }
+
+        .confirm-icon-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(248, 81, 73, 0.18);
+            border: 1px solid rgba(248, 81, 73, 0.35);
+            color: #f85149;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .confirm-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #f0f6fc;
+        }
+
+        .confirm-modal-body {
+            padding: 1.25rem 1.35rem;
+            font-size: 0.88rem;
+            color: #c9d1d9;
+            line-height: 1.5;
+        }
+
+        .confirm-target-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 0.65rem 0.85rem;
+            margin: 0.85rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .confirm-target-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid #30363d;
+        }
+
+        .confirm-target-name {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", monospace;
+            font-size: 0.8rem;
+            color: #58a6ff;
+            word-break: break-all;
+        }
+
+        .confirm-warning-note {
+            background: rgba(218, 54, 51, 0.1);
+            border-left: 3px solid #f85149;
+            padding: 0.65rem 0.85rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #ff7b72;
+            margin-top: 0.85rem;
+        }
+
+        .confirm-modal-footer {
+            padding: 0.95rem 1.35rem;
+            border-top: 1px solid #30363d;
+            background: #161b22;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .btn-cancel {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            font-weight: 600;
+            font-size: 0.84rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-cancel:hover {
+            background: #30363d;
+            color: #ffffff;
+        }
+
+        .btn-confirm-delete {
+            background: #da3633;
+            border: 1px solid rgba(248, 81, 73, 0.5);
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.84rem;
+            padding: 0.5rem 1.15rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            transition: all 0.15s ease;
+        }
+
+        .btn-confirm-delete:hover {
+            background: #b62324;
+            border-color: #ff7b72;
+            box-shadow: 0 0 12px rgba(248, 81, 73, 0.4);
+        }
+
+        .btn-confirm-delete:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Toast Feedback */
+        .toast-banner {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 0.75rem 1.15rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 150;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.25s ease;
+        }
+
+        .toast-banner.is-visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-banner.is-success {
+            border-color: rgba(46, 160, 67, 0.5);
+            color: #4ade80;
+        }
+
+        .toast-banner.is-error {
+            border-color: rgba(248, 81, 73, 0.5);
+            color: #f85149;
+        }
+
+        /* Footer */
+        .gallery-footer {
+            background: #161b22;
+            border-top: 1px solid #30363d;
+            padding: 1.25rem;
+            text-align: center;
+            color: #8b949e;
+            font-size: 0.8rem;
+            margin-top: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="header-bar">
+        <div class="header-content">
+            <div class="header-brand">
+                <a href="/" class="btn-back-dashboard" id="btn-back-dashboard" title="Return to Admin Dashboard">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <span class="header-title">
+                    <span>📷</span>
+                    <span>Admin Photo Gallery</span>
+                </span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span class="header-status-badge">
+                    <span class="status-dot"></span>
+                    <span>Admin Session Authenticated</span>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero / Summary Banner -->
+    <section class="gallery-hero">
+        <div class="gallery-hero-container">
+            <div class="hero-info">
+                <h1>
+                    <span>🖼️</span>
+                    <span>Stored Photo Catalog</span>
+                </h1>
+                <p>Private repository of client-uploaded verification photos. Preview full-resolution images, inspect upload metadata, or permanently remove files.</p>
+            </div>
+
+            <!-- Stats Metrics -->
+            <div class="metrics-bar">
+                <div class="metric-pill">
+                    <span class="metric-pill-label">Total Stored:</span>
+                    <span class="metric-pill-value" id="stats-count-value">0</span>
+                </div>
+                <div class="metric-pill">
+                    <span class="metric-pill-label">Disk Storage:</span>
+                    <span class="metric-pill-value" id="stats-size-value">0 KB</span>
+                </div>
+                <div class="metric-pill">
+                    <span class="metric-pill-label">Status:</span>
+                    <span class="metric-pill-value" style="color: #4ade80;">Active</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Toolbar: Search, Sort, Refresh -->
+    <section class="toolbar-container">
+        <div class="toolbar-left">
+            <input type="text" id="gallery-search" class="search-box" placeholder="Filter by filename or date...">
+            <select id="gallery-sort" class="select-filter" aria-label="Sort Photos">
+                <option value="newest">Sort: Newest First</option>
+                <option value="oldest">Sort: Oldest First</option>
+                <option value="largest">Sort: Largest File Size</option>
+                <option value="smallest">Sort: Smallest File Size</option>
+            </select>
+        </div>
+
+        <div class="toolbar-right">
+            <button id="btn-refresh-gallery" class="btn-refresh" type="button" title="Refresh photo catalog from server">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Refresh Gallery</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <main class="gallery-container">
+        <!-- Loading State -->
+        <div id="gallery-loading" class="state-container" style="display: none;">
+            <div class="spinner-circle"></div>
+            <div class="state-title">Loading Stored Photos</div>
+            <div class="state-desc">Fetching photo catalog from private storage...</div>
+        </div>
+
+        <!-- Error State -->
+        <div id="gallery-error" class="state-container" style="display: none;">
+            <div class="state-icon-box" style="color: #f85149; border-color: rgba(248, 81, 73, 0.4);">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <div class="state-title" id="gallery-error-title">Failed to Load Photos</div>
+            <div class="state-desc" id="gallery-error-desc">An error occurred while communicating with the server.</div>
+            <button class="btn-refresh" id="btn-error-retry" type="button">Try Again</button>
+        </div>
+
+        <!-- Empty State -->
+        <div id="gallery-empty" class="state-container" style="display: none;">
+            <div class="state-icon-box">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+            </div>
+            <div class="state-title">No Stored Photos Found</div>
+            <div class="state-desc">No photos have been uploaded by client devices yet. Uploaded images from the client Camera Verification workflow will appear here in real time.</div>
+            <a href="/camera" target="_blank" class="btn-refresh" style="text-decoration: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+                <span>Open Camera Verification Target</span>
+            </a>
+        </div>
+
+        <!-- Photos Grid -->
+        <div id="gallery-grid" class="photos-grid"></div>
+    </main>
+
+    <!-- Full-Size Image Preview Modal -->
+    <div id="preview-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="preview-modal-title">
+        <div class="preview-modal-box">
+            <div class="preview-modal-header">
+                <div class="preview-title-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span id="preview-modal-title" class="preview-filename">photo.jpg</span>
+                </div>
+                <button id="btn-preview-close" class="btn-modal-close" type="button" aria-label="Close Preview">&times;</button>
+            </div>
+
+            <div class="preview-modal-body">
+                <img id="preview-full-img" class="preview-full-img" src="" alt="Full-Size Photo Preview">
+            </div>
+
+            <div class="preview-modal-footer">
+                <div class="preview-meta-chips">
+                    <span class="preview-meta-item" id="preview-resolution-chip">Resolution: Loading...</span>
+                    <span class="preview-meta-item" id="preview-size-chip">Size: -</span>
+                    <span class="preview-meta-item" id="preview-type-chip">Format: -</span>
+                    <span class="preview-meta-item" id="preview-date-chip">Uploaded: -</span>
+                </div>
+
+                <div class="preview-actions-group">
+                    <a id="preview-download-link" href="#" download class="btn-action-download" title="Download original file">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Download</span>
+                    </a>
+                    <button id="preview-btn-delete" class="btn-action-delete" type="button" title="Permanently delete this photo">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        <span>Delete</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permanent Delete Confirmation Dialog Modal -->
+    <div id="delete-confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+        <div class="confirm-modal-box">
+            <div class="confirm-modal-header">
+                <div class="confirm-icon-badge">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                </div>
+                <div class="confirm-title" id="delete-confirm-title">Permanently Delete Photo?</div>
+            </div>
+
+            <div class="confirm-modal-body">
+                <p>Are you sure you want to permanently delete this stored photo from the server?</p>
+                <div class="confirm-target-box">
+                    <img id="delete-target-thumb" class="confirm-target-thumb" src="" alt="Thumbnail">
+                    <div class="confirm-target-name" id="delete-target-filename">filename.jpg</div>
+                </div>
+                <div class="confirm-warning-note">
+                    <strong>Permanent Erasure:</strong> This action cannot be undone. The stored image file will be permanently removed from disk storage.
+                </div>
+            </div>
+
+            <div class="confirm-modal-footer">
+                <button id="btn-cancel-delete" class="btn-cancel" type="button">Cancel</button>
+                <button id="btn-confirm-delete-action" class="btn-confirm-delete" type="button">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Yes, Permanently Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-banner" class="toast-banner" role="status" aria-live="polite">
+        <span id="toast-text">Notification message</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="gallery-footer">
+        <p><strong>Live Location Tracker</strong> &bull; Authenticated Admin Photo Repository &bull; AutoGraph</p>
+    </footer>
+
+    <!-- Socket.IO & Gallery Management Script -->
+    <script src="https://cdn.jsdelivr.net/npm/socket.io@4.8.1/client-dist/socket.io.min.js"></script>
+    <script>
+        (function () {
+            // CSRF Token provided by server session
+            const CSRF_TOKEN = "{{ csrfToken }}";
+
+            // State
+            let photosList = [];
+            let pendingDeleteFilename = null;
+            let currentPreviewPhoto = null;
+
+            // DOM Elements
+            const galleryGrid = document.getElementById("gallery-grid");
+            const galleryLoading = document.getElementById("gallery-loading");
+            const galleryError = document.getElementById("gallery-error");
+            const galleryErrorDesc = document.getElementById("gallery-error-desc");
+            const galleryEmpty = document.getElementById("gallery-empty");
+            const btnRefresh = document.getElementById("btn-refresh-gallery");
+            const btnErrorRetry = document.getElementById("btn-error-retry");
+            const searchInput = document.getElementById("gallery-search");
+            const sortSelect = document.getElementById("gallery-sort");
+            const statsCountVal = document.getElementById("stats-count-value");
+            const statsSizeVal = document.getElementById("stats-size-value");
+
+            // Preview Modal Elements
+            const previewModal = document.getElementById("preview-modal");
+            const previewModalTitle = document.getElementById("preview-modal-title");
+            const previewFullImg = document.getElementById("preview-full-img");
+            const previewResolutionChip = document.getElementById("preview-resolution-chip");
+            const previewSizeChip = document.getElementById("preview-size-chip");
+            const previewTypeChip = document.getElementById("preview-type-chip");
+            const previewDateChip = document.getElementById("preview-date-chip");
+            const previewDownloadLink = document.getElementById("preview-download-link");
+            const previewBtnDelete = document.getElementById("preview-btn-delete");
+            const btnPreviewClose = document.getElementById("btn-preview-close");
+
+            // Delete Confirm Modal Elements
+            const deleteModal = document.getElementById("delete-confirm-modal");
+            const deleteTargetFilename = document.getElementById("delete-target-filename");
+            const deleteTargetThumb = document.getElementById("delete-target-thumb");
+            const btnCancelDelete = document.getElementById("btn-cancel-delete");
+            const btnConfirmDeleteAction = document.getElementById("btn-confirm-delete-action");
+
+            // Toast Element
+            const toastBanner = document.getElementById("toast-banner");
+            const toastText = document.getElementById("toast-text");
+            let toastTimer = null;
+
+            function showToast(message, isError = false) {
+                if (toastTimer) clearTimeout(toastTimer);
+                toastText.textContent = message;
+                toastBanner.className = `toast-banner is-visible ${isError ? 'is-error' : 'is-success'}`;
+                toastTimer = setTimeout(() => {
+                    toastBanner.className = "toast-banner";
+                }, 3500);
+            }
+
+            // Helpers: Format Bytes
+            function formatBytes(bytes) {
+                if (!bytes || bytes === 0) return "0 B";
+                const k = 1024;
+                const sizes = ["B", "KB", "MB", "GB"];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+            }
+
+            // Helpers: Format Relative Time
+            function formatRelativeTime(isoString) {
+                if (!isoString) return "just now";
+                const time = new Date(isoString).getTime();
+                if (isNaN(time)) return "recently";
+                const diffSec = Math.max(0, Math.floor((Date.now() - time) / 1000));
+                if (diffSec < 5) return "just now";
+                if (diffSec < 60) return `${diffSec}s ago`;
+                const diffMin = Math.floor(diffSec / 60);
+                if (diffMin < 60) return `${diffMin}m ago`;
+                const diffHr = Math.floor(diffMin / 60);
+                if (diffHr < 24) return `${diffHr}h ago`;
+                const diffDays = Math.floor(diffHr / 24);
+                return `${diffDays}d ago`;
+            }
+
+            // Helpers: Format Absolute Date
+            function formatDateTime(isoString) {
+                if (!isoString) return "-";
+                const d = new Date(isoString);
+                if (isNaN(d.getTime())) return isoString;
+                return d.toLocaleDateString(undefined, {
+                    year: "numeric", month: "short", day: "numeric",
+                    hour: "2-digit", minute: "2-digit", second: "2-digit"
+                });
+            }
+
+            function escapeHtml(str) {
+                if (str == null) return "";
+                return String(str)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            // Update Metrics Bar
+            function updateMetrics() {
+                statsCountVal.textContent = photosList.length;
+                const totalBytes = photosList.reduce((acc, p) => acc + (p.sizeBytes || 0), 0);
+                statsSizeVal.textContent = formatBytes(totalBytes);
+            }
+
+            // Fetch Photos from /admin/photos
+            async function fetchPhotos(showLoadingState = true) {
+                if (showLoadingState) {
+                    galleryLoading.style.display = "flex";
+                    galleryError.style.display = "none";
+                    galleryEmpty.style.display = "none";
+                    galleryGrid.style.display = "none";
+                }
+
+                btnRefresh.classList.add("is-spinning");
+
+                try {
+                    const res = await fetch("/admin/photos", {
+                        method: "GET",
+                        headers: { "Accept": "application/json" }
+                    });
+
+                    if (res.status === 401 || res.status === 403 || res.redirected) {
+                        window.location.href = "/login";
+                        return;
+                    }
+
+                    if (!res.ok) {
+                        throw new Error(`Server returned HTTP ${res.status}`);
+                    }
+
+                    const data = await res.json();
+                    if (!data || !data.success || !Array.isArray(data.photos)) {
+                        throw new Error(data.error || "Invalid response format from server");
+                    }
+
+                    photosList = data.photos;
+                    renderGallery();
+                    updateMetrics();
+                } catch (err) {
+                    console.error("Error fetching photos:", err);
+                    galleryLoading.style.display = "none";
+                    galleryGrid.style.display = "none";
+                    galleryEmpty.style.display = "none";
+                    galleryError.style.display = "flex";
+                    galleryErrorDesc.textContent = err.message || "Failed to retrieve photos from secure catalog.";
+                } finally {
+                    btnRefresh.classList.remove("is-spinning");
+                    galleryLoading.style.display = "none";
+                }
+            }
+
+            // Filter & Sort
+            function getFilteredAndSortedPhotos() {
+                const query = (searchInput.value || "").trim().toLowerCase();
+                let filtered = photosList.filter(photo => {
+                    if (!query) return true;
+                    const name = (photo.filename || "").toLowerCase();
+                    const date = (photo.uploadedAt || "").toLowerCase();
+                    return name.includes(query) || date.includes(query);
+                });
+
+                const sortMode = sortSelect.value;
+                filtered.sort((a, b) => {
+                    if (sortMode === "newest") {
+                        return new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0);
+                    } else if (sortMode === "oldest") {
+                        return new Date(a.uploadedAt || 0) - new Date(b.uploadedAt || 0);
+                    } else if (sortMode === "largest") {
+                        return (b.sizeBytes || 0) - (a.sizeBytes || 0);
+                    } else if (sortMode === "smallest") {
+                        return (a.sizeBytes || 0) - (b.sizeBytes || 0);
+                    }
+                    return 0;
+                });
+
+                return filtered;
+            }
+
+            // Render Gallery Cards
+            function renderGallery() {
+                const items = getFilteredAndSortedPhotos();
+
+                if (items.length === 0) {
+                    galleryGrid.style.display = "none";
+                    galleryEmpty.style.display = "flex";
+                    galleryError.style.display = "none";
+                    return;
+                }
+
+                galleryEmpty.style.display = "none";
+                galleryError.style.display = "none";
+                galleryGrid.style.display = "grid";
+                galleryGrid.innerHTML = "";
+
+                items.forEach(photo => {
+                    const card = document.createElement("div");
+                    card.className = "photo-card";
+                    card.id = `card-${photo.filename}`;
+
+                    const rawExt = photo.filename.split(".").pop().toUpperCase();
+                    const photoUrl = `/admin/photo/${encodeURIComponent(photo.filename)}`;
+
+                    card.innerHTML = `
+                        <div class="photo-thumb-container" data-filename="${escapeHtml(photo.filename)}" title="Click to view full size">
+                            <img class="photo-thumb-img" src="${photoUrl}" alt="${escapeHtml(photo.filename)}" loading="lazy">
+                            <span class="photo-format-badge">${escapeHtml(rawExt)}</span>
+                            <div class="thumb-hover-overlay">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <span>Preview Full Size</span>
+                            </div>
+                        </div>
+
+                        <div class="photo-card-body">
+                            <div class="photo-filename-row">
+                                <span class="photo-filename" title="${escapeHtml(photo.filename)}">${escapeHtml(photo.filename)}</span>
+                                <button class="btn-copy-name" type="button" data-copy="${escapeHtml(photo.filename)}" title="Copy Filename">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="meta-list">
+                                <div class="meta-row">
+                                    <span class="meta-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        <span>Uploaded</span>
+                                    </span>
+                                    <span class="meta-val" title="${formatDateTime(photo.uploadedAt)}">${formatRelativeTime(photo.uploadedAt)}</span>
+                                </div>
+                                <div class="meta-row">
+                                    <span class="meta-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                        <span>Format</span>
+                                    </span>
+                                    <span class="meta-val">${escapeHtml(photo.mimeType || 'image/jpeg')}</span>
+                                </div>
+                                <div class="meta-row">
+                                    <span class="meta-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                                        <span>File Size</span>
+                                    </span>
+                                    <span class="meta-val">${formatBytes(photo.sizeBytes)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="photo-card-actions">
+                            <button class="btn-action-preview" type="button" data-preview="${escapeHtml(photo.filename)}" title="Open full-resolution preview">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <span>Preview</span>
+                            </button>
+                            <a href="${photoUrl}" download="${escapeHtml(photo.filename)}" class="btn-action-download" title="Download image to device">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                <span>Save</span>
+                            </a>
+                            <button class="btn-action-delete" type="button" data-delete="${escapeHtml(photo.filename)}" title="Permanently delete photo">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    `;
+
+                    galleryGrid.appendChild(card);
+                });
+            }
+
+            // Open Full-Size Preview Modal
+            function openPreview(filename) {
+                const photo = photosList.find(p => p.filename === filename);
+                if (!photo) return;
+
+                currentPreviewPhoto = photo;
+                const photoUrl = `/admin/photo/${encodeURIComponent(photo.filename)}`;
+
+                previewModalTitle.textContent = photo.filename;
+                previewFullImg.src = photoUrl;
+                previewDownloadLink.href = photoUrl;
+                previewDownloadLink.download = photo.filename;
+
+                previewSizeChip.textContent = `Size: ${formatBytes(photo.sizeBytes)}`;
+                previewTypeChip.textContent = `Format: ${photo.mimeType || 'image/jpeg'}`;
+                previewDateChip.textContent = `Uploaded: ${formatDateTime(photo.uploadedAt)}`;
+                previewResolutionChip.textContent = "Resolution: Calculating...";
+
+                // Measure natural image resolution when loaded
+                previewFullImg.onload = function () {
+                    if (previewFullImg.naturalWidth && previewFullImg.naturalHeight) {
+                        previewResolutionChip.textContent = `${previewFullImg.naturalWidth} × ${previewFullImg.naturalHeight} px`;
+                    }
+                };
+
+                previewModal.classList.add("is-active");
+            }
+
+            function closePreview() {
+                previewModal.classList.remove("is-active");
+                previewFullImg.src = "";
+                currentPreviewPhoto = null;
+            }
+
+            // Open Delete Confirmation Modal
+            function openDeleteModal(filename) {
+                const photo = photosList.find(p => p.filename === filename);
+                if (!photo) return;
+
+                pendingDeleteFilename = filename;
+                deleteTargetFilename.textContent = filename;
+                deleteTargetThumb.src = `/admin/photo/${encodeURIComponent(filename)}`;
+                deleteModal.classList.add("is-active");
+                btnConfirmDeleteAction.disabled = false;
+                btnConfirmDeleteAction.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Yes, Permanently Delete</span>
+                `;
+            }
+
+            function closeDeleteModal() {
+                deleteModal.classList.remove("is-active");
+                pendingDeleteFilename = null;
+                deleteTargetThumb.src = "";
+            }
+
+            // Execute Delete Request (POST /admin/photo/delete)
+            async function executeDeletePhoto() {
+                if (!pendingDeleteFilename) return;
+
+                const filename = pendingDeleteFilename;
+                btnConfirmDeleteAction.disabled = true;
+                btnConfirmDeleteAction.innerHTML = `<span>Deleting...</span>`;
+
+                try {
+                    const res = await fetch("/admin/photo/delete", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-csrf-token": CSRF_TOKEN
+                        },
+                        body: JSON.stringify({
+                            filename: filename,
+                            csrfToken: CSRF_TOKEN
+                        })
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok && data && data.success) {
+                        // Remove from local list
+                        const idx = photosList.findIndex(p => p.filename === filename);
+                        if (idx !== -1) photosList.splice(idx, 1);
+
+                        // Animate removal from DOM
+                        const card = document.getElementById(`card-${filename}`);
+                        if (card) {
+                            card.style.transition = "all 0.25s ease";
+                            card.style.opacity = "0";
+                            card.style.transform = "scale(0.9)";
+                            setTimeout(() => {
+                                if (card.parentNode) card.parentNode.removeChild(card);
+                                renderGallery();
+                                updateMetrics();
+                            }, 250);
+                        } else {
+                            renderGallery();
+                            updateMetrics();
+                        }
+
+                        // Close preview modal if deleting currently viewed photo
+                        if (currentPreviewPhoto && currentPreviewPhoto.filename === filename) {
+                            closePreview();
+                        }
+
+                        closeDeleteModal();
+                        showToast(`Successfully deleted ${filename}`);
+                    } else {
+                        throw new Error((data && data.error) || "Failed to delete photo from storage.");
+                    }
+                } catch (err) {
+                    console.error("Delete request error:", err);
+                    alert(`Error deleting photo: ${err.message || 'Network error'}`);
+                    btnConfirmDeleteAction.disabled = false;
+                    btnConfirmDeleteAction.innerHTML = `<span>Yes, Permanently Delete</span>`;
+                }
+            }
+
+            // Event Listeners
+            btnRefresh.addEventListener("click", () => fetchPhotos(true));
+            if (btnErrorRetry) btnErrorRetry.addEventListener("click", () => fetchPhotos(true));
+            searchInput.addEventListener("input", () => renderGallery());
+            sortSelect.addEventListener("change", () => renderGallery());
+
+            // Modal Close Listeners
+            btnPreviewClose.addEventListener("click", closePreview);
+            previewModal.addEventListener("click", (e) => {
+                if (e.target === previewModal) closePreview();
+            });
+
+            btnCancelDelete.addEventListener("click", closeDeleteModal);
+            deleteModal.addEventListener("click", (e) => {
+                if (e.target === deleteModal) closeDeleteModal();
+            });
+
+            btnConfirmDeleteAction.addEventListener("click", executeDeletePhoto);
+
+            // Preview Modal Delete Button
+            previewBtnDelete.addEventListener("click", () => {
+                if (currentPreviewPhoto) {
+                    openDeleteModal(currentPreviewPhoto.filename);
+                }
+            });
+
+            // Delegated Clicks on Grid
+            galleryGrid.addEventListener("click", (e) => {
+                // Preview thumbnail click
+                const thumb = e.target.closest(".photo-thumb-container");
+                if (thumb) {
+                    const fn = thumb.getAttribute("data-filename");
+                    if (fn) openPreview(fn);
+                    return;
+                }
+
+                // Preview button
+                const prevBtn = e.target.closest("[data-preview]");
+                if (prevBtn) {
+                    const fn = prevBtn.getAttribute("data-preview");
+                    if (fn) openPreview(fn);
+                    return;
+                }
+
+                // Delete button
+                const delBtn = e.target.closest("[data-delete]");
+                if (delBtn) {
+                    const fn = delBtn.getAttribute("data-delete");
+                    if (fn) openDeleteModal(fn);
+                    return;
+                }
+
+                // Copy filename
+                const copyBtn = e.target.closest("[data-copy]");
+                if (copyBtn) {
+                    const fn = copyBtn.getAttribute("data-copy");
+                    if (fn && navigator.clipboard) {
+                        navigator.clipboard.writeText(fn).then(() => {
+                            showToast(`Copied filename: ${fn}`);
+                        }).catch(() => {});
+                    }
+                    return;
+                }
+            });
+
+            // Escape Key Closes Modals
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    if (deleteModal.classList.contains("is-active")) {
+                        closeDeleteModal();
+                    } else if (previewModal.classList.contains("is-active")) {
+                        closePreview();
+                    }
+                }
+            });
+
+            // Real-Time Socket.IO Synchronization
+            const socket = io();
+
+            socket.on("photo-uploaded", (data) => {
+                console.log("> [Socket] New photo upload detected, refreshing gallery...");
+                showToast("New client photo upload received!");
+                fetchPhotos(false);
+            });
+
+            socket.on("photo-deleted", () => {
+                fetchPhotos(false);
+            });
+
+            // Initial Load
+            fetchPhotos(true);
+        })();
+    </script>
+</body>
+
+</html>

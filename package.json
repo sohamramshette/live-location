@@ -1,13 +1,14 @@
 {
   "name": "live-location-tracker",
   "version": "1.0.0",
-  "description": "",
+  "description": "Live Location Tracker by AutoGraph - Created by Soham",
   "main": "server.js",
   "scripts": {
-    "start": "node .",
-    "dev": "nodemon -e .html,.js ."
+    "start": "node server.js",
+    "dev": "nodemon -e .html,.js server.js",
+    "kill-port": "powershell -Command \"Stop-Process -Name cloudflared -Force -ErrorAction SilentlyContinue; Get-NetTCPConnection -LocalPort 6589 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }\""
   },
-  "author": "",
+  "author": "AutoGraph — Created by Soham",
   "license": "ISC",
   "dependencies": {
     "cloudflared": "^0.5.3",

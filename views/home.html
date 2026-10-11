@@ -4,43 +4,1832 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <title>Live Location Tracker - Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/1.0.2/css/bulma.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            background-color: #0f141c;
+            color: #f0f6fc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-bar {
+            background-color: #161b22;
+            border-bottom: 1px solid #30363d;
+        }
+
+        /* Network Mode Bar & Switcher */
+        .network-mode-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin: 0.75rem auto 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        .mode-buttons-wrap {
+            display: inline-flex;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 3px;
+            gap: 3px;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.35rem 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn:hover {
+            color: #f0f6fc;
+        }
+
+        .mode-btn.is-active {
+            background: #21262d;
+            color: #58a6ff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+
+        .mode-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 6px #22c55e;
+            display: inline-block;
+        }
+
+        .mode-status-dot.is-pending {
+            background: #eab308;
+            box-shadow: 0 0 6px #eab308;
+        }
+
+        .network-status-text {
+            font-size: 0.78rem;
+            color: #8b949e;
+        }
+
+        /* Target Cards & QR Section */
+        .target-cards-row {
+            display: flex;
+            justify-content: center;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+            margin-top: 0.85rem;
+            max-width: 1380px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .target-share-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.15rem 1.25rem;
+            flex: 1 1 340px;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            transition: border-color 0.2s ease, transform 0.15s ease;
+        }
+
+        .target-share-card:hover {
+            border-color: #58a6ff;
+            transform: translateY(-2px);
+        }
+
+        .target-card-top {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.65rem;
+        }
+
+        .target-card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #f0f6fc;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .copy-btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #58a6ff;
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .copy-btn:hover {
+            background: #30363d;
+            color: #79c0ff;
+            border-color: #58a6ff;
+        }
+
+        .copy-btn.copied {
+            background: rgba(34, 197, 94, 0.18) !important;
+            border-color: rgba(34, 197, 94, 0.5) !important;
+            color: #4ade80 !important;
+        }
+
+        .url-display-box {
+            width: 100%;
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 0.45rem 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .url-display-box code {
+            color: #58a6ff;
+            background: transparent;
+            font-size: 0.82rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 320px;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+        }
+
+        .url-open-link {
+            color: #8b949e;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            transition: color 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .url-open-link:hover {
+            color: #f0f6fc;
+        }
+
+        .qr-wrapper {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 8px;
+            width: 144px;
+            height: 144px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+            margin-bottom: 0.55rem;
+        }
+
+        .qr-wrapper canvas, .qr-wrapper img {
+            width: 128px !important;
+            height: 128px !important;
+            display: block;
+        }
+
+        .qr-caption {
+            font-size: 0.76rem;
+            color: #8b949e;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .section-panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.25rem;
+            height: 100%;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #21262d;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .empty-state {
+            background: #0d1117;
+            border: 1px dashed #30363d;
+            border-radius: 8px;
+            padding: 2.25rem 1rem;
+            text-align: center;
+            color: #8b949e;
+            font-size: 0.9rem;
+        }
+
+        /* Weather Button */
+        .weather-button {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #f0f6fc;
+            font-weight: 600;
+            border-radius: 8px;
+            margin-bottom: 0.65rem;
+            transition: all 0.2s ease;
+        }
+
+        .weather-button:hover {
+            border-color: #58a6ff;
+            color: #58a6ff;
+            background: #161b22;
+        }
+
+        /* Delivery Card with Device Diagnostics */
+        .delivery-card {
+            display: block;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.1rem 1.25rem;
+            margin-bottom: 1.15rem;
+            color: #f0f6fc;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .delivery-card:hover {
+            border-color: #58a6ff;
+        }
+
+        .delivery-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .delivery-id-group {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+        }
+
+        .delivery-id-title {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #f0f6fc;
+            letter-spacing: 0.02em;
+        }
+
+        .delivery-status-badge {
+            font-size: 0.76rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.35);
+        }
+
+        .card-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-open-map {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #58a6ff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.3rem 0.75rem;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-open-map:hover {
+            background: #30363d;
+            color: #79c0ff;
+            border-color: #58a6ff;
+        }
+
+        .btn-delete-target {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-delete-target:hover {
+            background: rgba(248, 81, 73, 0.15);
+            border-color: rgba(248, 81, 73, 0.45);
+            color: #f85149;
+        }
+
+        .delivery-card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #8b949e;
+            margin-bottom: 0.85rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid #21262d;
+        }
+
+        /* Device Diagnostics Section */
+        .diagnostics-panel {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 0.85rem 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .diagnostics-header {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #8b949e;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+            padding: 0.15rem 0;
+            border-radius: 4px;
+        }
+
+        .diagnostics-header:hover {
+            color: #c9d1d9;
+        }
+
+        .diagnostics-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .btn-diag-toggle {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.15s ease;
+            text-transform: none;
+            letter-spacing: normal;
+            flex-shrink: 0;
+        }
+
+        .btn-diag-toggle:hover {
+            background: #30363d;
+            color: #58a6ff;
+            border-color: #58a6ff;
+        }
+
+        .btn-diag-toggle .chevron-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .diag-collapsed-summary {
+            display: none;
+            font-size: 0.72rem;
+            color: #8b949e;
+            font-weight: 500;
+            background: rgba(110, 118, 129, 0.12);
+            border: 1px solid rgba(110, 118, 129, 0.25);
+            border-radius: 4px;
+            padding: 0.12rem 0.45rem;
+            letter-spacing: normal;
+            text-transform: none;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 260px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Collapsed / Minimised State */
+        .diagnostics-panel.is-collapsed {
+            padding: 0.5rem 0.85rem;
+            background: rgba(22, 27, 34, 0.6);
+        }
+
+        .diagnostics-panel.is-collapsed .diagnostics-header {
+            margin-bottom: 0;
+        }
+
+        .diagnostics-panel.is-collapsed .diag-grid {
+            display: none;
+        }
+
+        .diagnostics-panel.is-collapsed .diag-collapsed-summary {
+            display: inline-block;
+        }
+
+        .diagnostics-panel.is-collapsed .btn-diag-toggle .chevron-icon {
+            transform: rotate(180deg);
+        }
+
+        .btn-section-toggle {
+            background: transparent;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .btn-section-toggle:hover {
+            border-color: #58a6ff;
+            color: #58a6ff;
+            background: #21262d;
+        }
+
+        .global-toggle-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 0.85rem;
+            gap: 0.65rem;
+        }
+
+        .diag-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .diag-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 0.65rem 0.75rem;
+        }
+
+        .diag-block-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #58a6ff;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.45rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid #21262d;
+            text-transform: uppercase;
+        }
+
+        .diag-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.77rem;
+            padding: 0.2rem 0;
+            gap: 0.5rem;
+        }
+
+        .diag-lbl {
+            color: #8b949e;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .diag-val {
+            color: #f0f6fc;
+            font-weight: 500;
+            text-align: right;
+            word-break: break-all;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 0.75rem;
+        }
+
+        .diag-val.is-unavailable {
+            color: #6e7681;
+            font-style: italic;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: 400;
+        }
+
+        /* Confirmation Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 1rem;
+            animation: modalFadeIn 0.15s ease-out;
+        }
+
+        .modal-overlay.is-active {
+            display: flex;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes modalScaleUp {
+            from { transform: scale(0.94); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 14px;
+            max-width: 440px;
+            width: 100%;
+            padding: 1.5rem;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+            animation: modalScaleUp 0.18s ease-out;
+            color: #f0f6fc;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .modal-header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #f0f6fc;
+        }
+
+        .modal-icon-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: rgba(248, 81, 73, 0.15);
+            color: #f85149;
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            font-size: 1.4rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: color 0.15s ease;
+        }
+
+        .modal-close-btn:hover {
+            color: #f0f6fc;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+            font-size: 0.88rem;
+            color: #8b949e;
+            line-height: 1.5;
+        }
+
+        .modal-target-badge {
+            display: block;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #f0f6fc;
+            margin: 0.65rem 0 0.85rem 0;
+            word-break: break-all;
+        }
+
+        .modal-note {
+            font-size: 0.78rem;
+            color: #8b949e;
+            background: rgba(110, 118, 129, 0.1);
+            border-left: 3px solid #f85149;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0 4px 4px 0;
+            margin-top: 0.65rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-modal-cancel {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            font-size: 0.84rem;
+            font-weight: 600;
+            padding: 0.5rem 1.1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-modal-cancel:hover {
+            background: #30363d;
+            color: #fff;
+            border-color: #8b949e;
+        }
+
+        .btn-modal-delete {
+            background: #da3633;
+            border: 1px solid #f85149;
+            color: #ffffff;
+            font-size: 0.84rem;
+            font-weight: 600;
+            padding: 0.5rem 1.15rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-modal-delete:hover {
+            background: #b62324;
+            border-color: #ff7b72;
+            box-shadow: 0 0 12px rgba(248, 81, 73, 0.4);
+        }
+
+        .btn-modal-delete:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Admin Photo Gallery Dashboard Section */
+        .admin-gallery-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.15rem 1.35rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            transition: border-color 0.2s ease, transform 0.15s ease;
+        }
+
+        .admin-gallery-card:hover {
+            border-color: #58a6ff;
+        }
+
+        .admin-gallery-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .gallery-content-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 260px;
+        }
+
+        .gallery-card-badge {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: rgba(88, 166, 255, 0.12);
+            border: 1px solid rgba(88, 166, 255, 0.28);
+            color: #58a6ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .gallery-card-title-row {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            margin-bottom: 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        .gallery-card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #f0f6fc;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .gallery-card-sub {
+            font-size: 0.82rem;
+            color: #8b949e;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .btn-open-gallery {
+            background: #238636;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 0.55rem 1.15rem;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(35, 134, 54, 0.3);
+            white-space: nowrap;
+        }
+
+        .btn-open-gallery:hover {
+            background: #2ea043;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.45);
+        }
+    </style>
 </head>
 
 <body>
-    <header class="has-background-black p-3 has-text-centered">
-        <h1 class="title is-4 mb-2">Live Location Tracker</h1>
-        <a href="http://madhanmaaz.netlify.app/" class="is-block mb-2">Created by madhanmaaz</a>
-        <p class="is-block">Send to Target: <code>{{ global.remoteURL }}/weather</code></p>
+    <!-- Top Header -->
+    <header class="header-bar p-4 has-text-centered">
+        <h1 class="title is-4 mb-1 has-text-white">Live Location Tracker</h1>
+        <div class="mb-2">
+            <span class="is-block has-text-weight-semibold has-text-light is-size-7">by AutoGraph &bull; Created by Soham</span>
+        </div>
+
+        <!-- Network Mode Switcher -->
+        <div class="network-mode-bar" id="network-mode-bar">
+            <div class="mode-buttons-wrap">
+                <button type="button" class="mode-btn is-active" id="btn-mode-remote">
+                    <span>🌐 Public Internet (Cloudflare)</span>
+                    <span class="mode-status-dot" id="remote-status-indicator" title="Connected"></span>
+                </button>
+                <button type="button" class="mode-btn" id="btn-mode-lan">
+                    <span>📶 Local Wi-Fi Network</span>
+                </button>
+            </div>
+            <div class="network-status-text" id="network-status-text">
+                <span id="tunnel-status-label">🟢 Cloudflare tunnel active</span>
+            </div>
+        </div>
+
+        <!-- Target Links & QR Code Share Row -->
+        <div class="target-cards-row">
+            <!-- Weather Target Card -->
+            <div class="target-share-card">
+                <div class="target-card-top">
+                    <span class="target-card-title">🌦️ Weather Target</span>
+                    <button class="copy-btn" id="copy-weather-btn" type="button" title="Copy Weather Link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copy Link</span>
+                    </button>
+                </div>
+                <div class="url-display-box">
+                    <code id="weather-url-text">{{ remoteURL }}/weather</code>
+                    <a href="{{ remoteURL }}/weather" id="weather-open-link" target="_blank" class="url-open-link" title="Open in new tab">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                </div>
+                <div class="qr-wrapper" id="qr-weather-box"></div>
+                <span class="qr-caption">📱 Scan with phone to open Weather</span>
+            </div>
+
+            <!-- Delivery Target Card -->
+            <div class="target-share-card">
+                <div class="target-card-top">
+                    <span class="target-card-title">📦 Delivery Target</span>
+                    <button class="copy-btn" id="copy-delivery-btn" type="button" title="Copy Delivery Link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copy Link</span>
+                    </button>
+                </div>
+                <div class="url-display-box">
+                    <code id="delivery-url-text">{{ remoteURL }}/delivery</code>
+                    <a href="{{ remoteURL }}/delivery" id="delivery-open-link" target="_blank" class="url-open-link" title="Open in new tab">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                </div>
+                <div class="qr-wrapper" id="qr-delivery-box"></div>
+                <span class="qr-caption">📱 Scan with phone to open Delivery</span>
+            </div>
+
+            <!-- Camera Target Card -->
+            <div class="target-share-card">
+                <div class="target-card-top">
+                    <span class="target-card-title">📷 Camera Target</span>
+                    <button class="copy-btn" id="copy-camera-btn" type="button" title="Copy Camera Link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copy Link</span>
+                    </button>
+                </div>
+                <div class="url-display-box">
+                    <code id="camera-url-text">{{ remoteURL }}/camera</code>
+                    <a href="{{ remoteURL }}/camera" id="camera-open-link" target="_blank" class="url-open-link" title="Open in new tab">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                </div>
+                <div class="qr-wrapper" id="qr-camera-box"></div>
+                <span class="qr-caption">📱 Scan with phone to open Camera</span>
+            </div>
+        </div>
     </header>
 
-    <section id="tar-content" class="container is-widescreen p-2 is-flex is-flex-direction-column is-gap-1">
-        <h1 class="title is-5">Targets</h1>
+    <!-- Main Dashboard Container -->
+    <main class="container is-widescreen p-4 mt-2">
+        <!-- Admin Photo Gallery Section Card -->
+        <section class="admin-gallery-card mb-4" id="section-admin-gallery" aria-label="Photo Gallery Summary">
+            <div class="admin-gallery-content">
+                <div class="gallery-content-left">
+                    <div class="gallery-card-badge">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="gallery-card-title-row">
+                            <span class="gallery-card-title">📷 Admin Photo Gallery</span>
+                            <span id="dashboard-photo-count" class="tag is-info is-rounded" title="Total photos stored on server">
+                                {{ photosCount }} Photos Stored
+                            </span>
+                        </div>
+                        <p class="gallery-card-sub">Secure storage for client verification photos. Inspect full-resolution captures, review metadata, or remove files.</p>
+                    </div>
+                </div>
+                <div>
+                    <a href="/admin/gallery" id="btn-open-gallery" class="btn-open-gallery" title="Open Admin Photo Gallery">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span>Open Photo Gallery</span>
+                    </a>
+                </div>
+            </div>
+        </section>
 
-        {{ for(value, key in TARGETS) }}
-        <a href="/map?id={{ key }}" class="button is-fullwidth">
-            {{ key }}
-        </a>
-        {{/}}
-    </section>
+        <div class="global-toggle-bar">
+            <button id="btn-toggle-all-global" class="btn-section-toggle" type="button" title="Toggle all diagnostics across all targets" style="background: #161b22; border-color: #30363d; padding: 0.35rem 0.8rem; font-size: 0.78rem;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                <span id="global-toggle-text">Minimise All Details</span>
+            </button>
+        </div>
 
+        <div class="columns is-desktop is-variable is-4">
+            
+            <!-- SECTION 1: Weather Targets -->
+            <div class="column is-12-tablet is-6-desktop">
+                <div class="section-panel">
+                    <div class="section-header">
+                        <h2>
+                            <span>🌦️</span>
+                            <span>Weather Targets</span>
+                        </h2>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <button id="btn-toggle-all-weather" class="btn-section-toggle" type="button" title="Minimise or Expand all weather targets">Minimise All</button>
+                            <span id="weather-count" class="tag is-dark is-rounded">0</span>
+                        </div>
+                    </div>
+
+                    <div id="weather-list">
+                        <div id="no-weather" class="empty-state" style="{{ Object.keys(weatherTargets).length > 0 ? 'display: none;' : '' }}">
+                            No active weather targets
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: Active Deliveries -->
+            <div class="column is-12-tablet is-6-desktop">
+                <div class="section-panel">
+                    <div class="section-header">
+                        <h2>
+                            <span>📦</span>
+                            <span>Active Deliveries</span>
+                        </h2>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <button id="btn-toggle-all-delivery" class="btn-section-toggle" type="button" title="Minimise or Expand all active deliveries">Minimise All</button>
+                            <span id="delivery-count" class="tag is-dark is-rounded">0</span>
+                        </div>
+                    </div>
+
+                    <div id="delivery-list">
+                        <div id="no-delivery" class="empty-state" style="{{ Object.keys(deliveryTargets).length > 0 ? 'display: none;' : '' }}">
+                            No active deliveries
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer p-4 has-text-centered is-size-7">
+        <p><strong>Live Location Tracker</strong> by <strong>AutoGraph</strong> &bull; Created by Soham</p>
+    </footer>
+
+    <!-- Temporary Delete Double-Verification Modal -->
+    <div id="delete-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-header-title">
+                    <div class="modal-icon-badge">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </div>
+                    <span id="delete-modal-title">Delete Device Temporarily?</span>
+                </div>
+                <button id="btn-modal-close" class="modal-close-btn" type="button" aria-label="Cancel and Close">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <p>Are you sure you want to temporarily delete this target from the active dashboard?</p>
+                <div id="modal-target-display" class="modal-target-badge">TARGET-ID</div>
+                <div class="modal-note">
+                    <strong>Safe Action:</strong> This removes the session from the dashboard. If the device sends another GPS update later, it will automatically reconnect.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btn-modal-cancel" class="btn-modal-cancel" type="button">Cancel</button>
+                <button id="btn-modal-confirm" class="btn-modal-delete" type="button">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Yes, Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socket.IO & Dashboard Controller -->
     <script src="https://cdn.jsdelivr.net/npm/socket.io@4.8.1/client-dist/socket.io.min.js"></script>
     <script>
-        const content = document.querySelector("#tar-content")
-        const socket = io("", {
-            secure: true,
-            path: "/socket.io",
-            transports: ['websocket']
-        })
+        (function () {
+            const weatherList = document.getElementById("weather-list");
+            const deliveryList = document.getElementById("delivery-list");
+            const noWeather = document.getElementById("no-weather");
+            const noDelivery = document.getElementById("no-delivery");
+            const weatherCountEl = document.getElementById("weather-count");
+            const deliveryCountEl = document.getElementById("delivery-count");
 
-        socket.on("user-connected", newId => {
-            const a = document.createElement('a')
-            a.href = `/map?id=${newId}`
-            a.className = "button is-fullwidth"
-            a.innerText = newId
-            content.appendChild(a)
-        })
+            // Format relative time helper
+            function formatRelativeTime(isoString) {
+                if (!isoString) return "just now";
+                const timestamp = new Date(isoString).getTime();
+                if (isNaN(timestamp)) return "just now";
+
+                const diffSec = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+                if (diffSec < 5) return "just now";
+                if (diffSec < 60) return `${diffSec}s ago`;
+                const diffMin = Math.floor(diffSec / 60);
+                if (diffMin < 60) return `${diffMin}m ago`;
+                const diffHr = Math.floor(diffMin / 60);
+                return `${diffHr}h ago`;
+            }
+
+            // Update badge counts and empty states
+            function updateStateCounts() {
+                const weatherCards = weatherList.querySelectorAll("[data-weather-id]");
+                const deliveryCards = deliveryList.querySelectorAll("[data-delivery-id]");
+
+                weatherCountEl.textContent = weatherCards.length;
+                deliveryCountEl.textContent = deliveryCards.length;
+
+                noWeather.style.display = weatherCards.length === 0 ? "block" : "none";
+                noDelivery.style.display = deliveryCards.length === 0 ? "block" : "none";
+            }
+
+            // Update all relative times across delivery cards
+            function refreshAllRelativeTimes() {
+                const cards = deliveryList.querySelectorAll(".delivery-card");
+                cards.forEach(card => {
+                    const timeEl = card.querySelector(".relative-time");
+                    const timestamp = card.getAttribute("data-timestamp");
+                    if (timeEl && timestamp) {
+                        timeEl.textContent = `Updated: ${formatRelativeTime(timestamp)}`;
+                    }
+                });
+            }
+
+            function escapeHtml(str) {
+                if (str == null) return "";
+                return String(str)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            let globalDefaultMinimized = localStorage.getItem("live_tracker_diag_minimized") === "true";
+
+            function renderDiagnosticsHTML(diag, isCollapsed = false) {
+                diag = diag || {};
+
+                function formatVal(v) {
+                    if (v == null || v === "Information Unavailable" || v === "null" || v === "undefined" || v === "") {
+                        return `<span class="diag-val is-unavailable">Information Unavailable</span>`;
+                    }
+                    return `<span class="diag-val">${escapeHtml(v)}</span>`;
+                }
+
+                // Summary chips displayed when card diagnostics are minimised
+                const summaryParts = [];
+                if (diag.os && diag.os !== "Information Unavailable") summaryParts.push(diag.os);
+                if (diag.browser && diag.browser !== "Information Unavailable") summaryParts.push(diag.browser.split(" ")[0]);
+                if (diag.batteryLevel && diag.batteryLevel !== "Information Unavailable") summaryParts.push(diag.batteryLevel);
+                if (diag.ip && diag.ip !== "Information Unavailable") summaryParts.push(diag.ip);
+                const summaryText = summaryParts.length > 0 ? summaryParts.join(" • ") : "Runtime Diagnostics";
+
+                const collapsedClass = isCollapsed ? " is-collapsed" : "";
+                const toggleLabel = isCollapsed ? "Expand" : "Minimise";
+
+                return `
+                    <div class="diagnostics-panel${collapsedClass}">
+                        <div class="diagnostics-header" role="button" tabindex="0" title="Click to minimise or expand details">
+                            <div class="diagnostics-header-left">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                <span>Device Diagnostics</span>
+                                <span class="diag-collapsed-summary" title="${escapeHtml(summaryText)}">${escapeHtml(summaryText)}</span>
+                            </div>
+                            <button type="button" class="btn-diag-toggle" aria-label="Toggle diagnostics visibility">
+                                <span class="toggle-text">${toggleLabel}</span>
+                                <svg class="chevron-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                            </button>
+                        </div>
+                        <div class="diag-grid">
+                            <!-- 1. DEVICE -->
+                            <div class="diag-block">
+                                <div class="diag-block-title">DEVICE</div>
+                                <div class="diag-row"><span class="diag-lbl">Device:</span> ${formatVal(diag.device)}</div>
+                                <div class="diag-row"><span class="diag-lbl">OS:</span> ${formatVal(diag.os)}</div>
+                                <div class="diag-row"><span class="diag-lbl">Browser:</span> ${formatVal(diag.browser)}</div>
+                            </div>
+
+                            <!-- 2. DISPLAY -->
+                            <div class="diag-block">
+                                <div class="diag-block-title">DISPLAY</div>
+                                <div class="diag-row"><span class="diag-lbl">Screen:</span> ${formatVal(diag.screen)}</div>
+                            </div>
+
+                            <!-- 3. NETWORK -->
+                            <div class="diag-block">
+                                <div class="diag-block-title">NETWORK</div>
+                                <div class="diag-row"><span class="diag-lbl">IP:</span> ${formatVal(diag.ip)}</div>
+                                <div class="diag-row"><span class="diag-lbl">Connection:</span> ${formatVal(diag.connection)}</div>
+                                <div class="diag-row"><span class="diag-lbl">Network Quality:</span> ${formatVal(diag.networkQuality)}</div>
+                                <div class="diag-row"><span class="diag-lbl">Downlink:</span> ${formatVal(diag.downlink)}</div>
+                                <div class="diag-row"><span class="diag-lbl">RTT:</span> ${formatVal(diag.rtt)}</div>
+                            </div>
+
+                            <!-- 4. LOCATION -->
+                            <div class="diag-block">
+                                <div class="diag-block-title">LOCATION</div>
+                                <div class="diag-row"><span class="diag-lbl">Latitude:</span> ${formatVal(diag.latitude)}</div>
+                                <div class="diag-row"><span class="diag-lbl">Longitude:</span> ${formatVal(diag.longitude)}</div>
+                                <div class="diag-row"><span class="diag-lbl">Accuracy:</span> ${formatVal(diag.accuracy)}</div>
+                                <div class="diag-row"><span class="diag-lbl">Updated:</span> ${formatVal(diag.lastUpdated)}</div>
+                            </div>
+
+                            <!-- 5. ENVIRONMENT -->
+                            <div class="diag-block">
+                                <div class="diag-block-title">ENVIRONMENT</div>
+                                <div class="diag-row"><span class="diag-lbl">Timezone:</span> ${formatVal(diag.timezone)}</div>
+                                <div class="diag-row"><span class="diag-lbl">Language:</span> ${formatVal(diag.language)}</div>
+                            </div>
+
+                            <!-- 6. BATTERY -->
+                            <div class="diag-block">
+                                <div class="diag-block-title">BATTERY</div>
+                                <div class="diag-row"><span class="diag-lbl">Level:</span> ${formatVal(diag.batteryLevel)}</div>
+                                <div class="diag-row"><span class="diag-lbl">Charging:</span> ${formatVal(diag.batteryCharging)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Create weather card element with compact Device Diagnostics
+            function createWeatherCard(data) {
+                const card = document.createElement("div");
+                card.className = "delivery-card weather-target-card";
+                card.id = `weather-card-${data.id}`;
+                card.setAttribute("data-weather-id", data.id);
+                card.setAttribute("data-timestamp", data.lastUpdated || new Date().toISOString());
+                const isMin = card.hasAttribute("data-minimized") ? (card.getAttribute("data-minimized") === "true") : globalDefaultMinimized;
+                card.setAttribute("data-minimized", isMin ? "true" : "false");
+
+                const timeStr = formatRelativeTime(data.lastUpdated || new Date().toISOString());
+                const diagHtml = renderDiagnosticsHTML(data.diagnostics, isMin);
+
+                card.innerHTML = `
+                    <div class="delivery-card-top">
+                        <div class="delivery-id-group">
+                            <span class="delivery-id-title">🌦️ ${escapeHtml(data.id)}</span>
+                            <span class="delivery-status-badge status-text">🟢 ${escapeHtml(data.status || 'Live')}</span>
+                        </div>
+                        <div class="card-actions-group">
+                            <a href="/map?id=${encodeURIComponent(data.id)}" class="btn-open-map" title="View on Live Map">
+                                <span>Open Map</span>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            </a>
+                            <button type="button" class="btn-delete-target" data-id="${escapeHtml(data.id)}" data-type="weather" title="Temporarily delete this target">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="delivery-card-meta">
+                        <span class="relative-time">Updated: ${timeStr}</span>
+                    </div>
+                    <div class="target-diagnostics-container">
+                        ${diagHtml}
+                    </div>
+                `;
+
+                return card;
+            }
+
+            // Create delivery card element with compact Device Diagnostics
+            function createDeliveryCard(data) {
+                const card = document.createElement("div");
+                card.className = "delivery-card";
+                card.id = `delivery-card-${data.id}`;
+                card.setAttribute("data-delivery-id", data.id);
+                card.setAttribute("data-timestamp", data.lastUpdated || new Date().toISOString());
+                const isMin = card.hasAttribute("data-minimized") ? (card.getAttribute("data-minimized") === "true") : globalDefaultMinimized;
+                card.setAttribute("data-minimized", isMin ? "true" : "false");
+
+                const timeStr = formatRelativeTime(data.lastUpdated || new Date().toISOString());
+                const diagHtml = renderDiagnosticsHTML(data.diagnostics, isMin);
+
+                card.innerHTML = `
+                    <div class="delivery-card-top">
+                        <div class="delivery-id-group">
+                            <span class="delivery-id-title">📦 ${escapeHtml(data.id)}</span>
+                            <span class="delivery-status-badge status-text">🟢 ${escapeHtml(data.status || 'Live')}</span>
+                        </div>
+                        <div class="card-actions-group">
+                            <a href="/map?id=${encodeURIComponent(data.id)}" class="btn-open-map" title="View on Live Map">
+                                <span>Open Map</span>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            </a>
+                            <button type="button" class="btn-delete-target" data-id="${escapeHtml(data.id)}" data-type="delivery" title="Temporarily delete this target">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="delivery-card-meta">
+                        <span class="relative-time">Updated: ${timeStr}</span>
+                    </div>
+                    <div class="target-diagnostics-container">
+                        ${diagHtml}
+                    </div>
+                `;
+
+                return card;
+            }
+
+            // 1. Copy to Clipboard Action Handler
+            function setupCopyButton(btnId, textElId) {
+                const btn = document.getElementById(btnId);
+                const textEl = document.getElementById(textElId);
+                if (!btn || !textEl) return;
+
+                btn.addEventListener("click", () => {
+                    const urlToCopy = textEl.textContent.trim();
+                    if (!urlToCopy) return;
+
+                    const originalHtml = btn.innerHTML;
+                    const triggerFeedback = () => {
+                        btn.classList.add("copied");
+                        btn.innerHTML = `
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Copied!</span>
+                        `;
+                        setTimeout(() => {
+                            btn.classList.remove("copied");
+                            btn.innerHTML = originalHtml;
+                        }, 2000);
+                    };
+
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(urlToCopy).then(triggerFeedback).catch(fallback);
+                    } else {
+                        fallback();
+                    }
+
+                    function fallback() {
+                        const tempInput = document.createElement("textarea");
+                        tempInput.value = urlToCopy;
+                        tempInput.style.position = "fixed";
+                        tempInput.style.opacity = "0";
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        try {
+                            document.execCommand("copy");
+                            triggerFeedback();
+                        } catch (err) {
+                            console.error("Copy failed", err);
+                        }
+                        document.body.removeChild(tempInput);
+                    }
+                });
+            }
+
+            setupCopyButton("copy-weather-btn", "weather-url-text");
+            setupCopyButton("copy-delivery-btn", "delivery-url-text");
+            setupCopyButton("copy-camera-btn", "camera-url-text");
+
+            // 2. Render QR Code for both targets
+            function renderQRCode(boxId, rawUrl) {
+                const box = document.getElementById(boxId);
+                if (!box || !rawUrl) return;
+
+                box.innerHTML = "";
+
+                // Prefer client-side QRCodeJS if loaded
+                if (typeof QRCode !== "undefined") {
+                    try {
+                        new QRCode(box, {
+                            text: rawUrl,
+                            width: 128,
+                            height: 128,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+                        return;
+                    } catch (e) {
+                        console.warn("QRCodeJS render failed, falling back to image", e);
+                    }
+                }
+
+                // Fallback to high-availability QR image service
+                const img = document.createElement("img");
+                img.src = "https://api.qrserver.com/v1/create-qr-code/?size=128x128&margin=0&data=" + encodeURIComponent(rawUrl);
+                img.alt = "QR Code";
+                img.width = 128;
+                img.height = 128;
+                box.appendChild(img);
+            }
+
+            let currentMode = "remote"; // "remote" | "lan"
+            let serverRemoteUrl = '{{ remoteURL }}'.trim();
+            let serverLanUrl = '{{ lanURL }}'.trim();
+
+            function getActiveBaseUrl() {
+                if (currentMode === "lan" && serverLanUrl) {
+                    return serverLanUrl;
+                }
+                if (serverRemoteUrl && serverRemoteUrl.startsWith("http")) {
+                    return serverRemoteUrl;
+                }
+                if (serverLanUrl) {
+                    return serverLanUrl;
+                }
+                return window.location.origin;
+            }
+
+            function updateShareTargets() {
+                const activeBase = getActiveBaseUrl().replace(/\/+$/, "");
+
+                const weatherUrl = `${activeBase}/weather`;
+                const deliveryUrl = `${activeBase}/delivery`;
+                const cameraUrl = `${activeBase}/camera`;
+
+                const wText = document.getElementById("weather-url-text");
+                const dText = document.getElementById("delivery-url-text");
+                const cText = document.getElementById("camera-url-text");
+
+                const wLink = document.getElementById("weather-open-link");
+                const dLink = document.getElementById("delivery-open-link");
+                const cLink = document.getElementById("camera-open-link");
+
+                if (wText) wText.textContent = weatherUrl;
+                if (dText) dText.textContent = deliveryUrl;
+                if (cText) cText.textContent = cameraUrl;
+
+                if (wLink) wLink.href = weatherUrl;
+                if (dLink) dLink.href = deliveryUrl;
+                if (cLink) cLink.href = cameraUrl;
+
+                renderQRCode("qr-weather-box", weatherUrl);
+                renderQRCode("qr-delivery-box", deliveryUrl);
+                renderQRCode("qr-camera-box", cameraUrl);
+
+                // Update tunnel status label and dot
+                const statusLabel = document.getElementById("tunnel-status-label");
+                const dot = document.getElementById("remote-status-indicator");
+                if (serverRemoteUrl && serverRemoteUrl.startsWith("http")) {
+                    if (statusLabel) {
+                        statusLabel.innerHTML = `🟢 Cloudflare tunnel online (<a href="${serverRemoteUrl}" target="_blank" style="color: #58a6ff; text-decoration: underline;">visit</a>)`;
+                    }
+                    if (dot) {
+                        dot.className = "mode-status-dot";
+                    }
+                } else {
+                    if (statusLabel) {
+                        statusLabel.innerHTML = `⏳ Cloudflare tunnel connecting... (Local Wi-Fi ready)`;
+                    }
+                    if (dot) {
+                        dot.className = "mode-status-dot is-pending";
+                    }
+                }
+            }
+
+            const btnModeRemote = document.getElementById("btn-mode-remote");
+            const btnModeLan = document.getElementById("btn-mode-lan");
+
+            if (btnModeRemote) {
+                btnModeRemote.addEventListener("click", () => {
+                    currentMode = "remote";
+                    btnModeRemote.classList.add("is-active");
+                    if (btnModeLan) btnModeLan.classList.remove("is-active");
+                    updateShareTargets();
+                });
+            }
+
+            if (btnModeLan) {
+                btnModeLan.addEventListener("click", () => {
+                    currentMode = "lan";
+                    btnModeLan.classList.add("is-active");
+                    if (btnModeRemote) btnModeRemote.classList.remove("is-active");
+                    updateShareTargets();
+                });
+            }
+
+            updateShareTargets();
+
+            // Initial server weather targets
+            const serverWeatherTargets = {{- weatherTargets ? JSON.stringify(weatherTargets) : '{}' }};
+            for (const id in serverWeatherTargets) {
+                if (Object.prototype.hasOwnProperty.call(serverWeatherTargets, id)) {
+                    const card = createWeatherCard(serverWeatherTargets[id]);
+                    weatherList.appendChild(card);
+                }
+            }
+
+            // Initial server delivery targets
+            const initialDeliveries = {{- deliveryTargets ? JSON.stringify(deliveryTargets) : '{}' }};
+            for (const id in initialDeliveries) {
+                if (Object.prototype.hasOwnProperty.call(initialDeliveries, id)) {
+                    const card = createDeliveryCard(initialDeliveries[id]);
+                    deliveryList.appendChild(card);
+                }
+            }
+
+            // Initial counts & timestamp refresh
+            updateStateCounts();
+            refreshAllRelativeTimes();
+            setInterval(refreshAllRelativeTimes, 5000);
+
+            // 3. Delegated click handler for minimising / expanding individual card diagnostics
+            document.addEventListener("click", (e) => {
+                const header = e.target.closest(".diagnostics-header");
+                if (!header) return;
+
+                const panel = header.closest(".diagnostics-panel");
+                if (!panel) return;
+
+                const isCollapsed = panel.classList.toggle("is-collapsed");
+                const toggleText = panel.querySelector(".btn-diag-toggle .toggle-text");
+                if (toggleText) {
+                    toggleText.textContent = isCollapsed ? "Expand" : "Minimise";
+                }
+
+                const card = panel.closest(".delivery-card");
+                if (card) {
+                    card.setAttribute("data-minimized", isCollapsed ? "true" : "false");
+                }
+            });
+
+            // 4. Section and Global Toggle Controllers
+            function toggleCardContainer(containerEl, forceCollapse) {
+                const panels = containerEl.querySelectorAll(".diagnostics-panel");
+                if (panels.length === 0) return false;
+
+                let collapse = forceCollapse;
+                if (collapse === undefined) {
+                    const hasExpanded = Array.from(panels).some(p => !p.classList.contains("is-collapsed"));
+                    collapse = hasExpanded;
+                }
+
+                panels.forEach(panel => {
+                    panel.classList.toggle("is-collapsed", collapse);
+                    const toggleText = panel.querySelector(".btn-diag-toggle .toggle-text");
+                    if (toggleText) toggleText.textContent = collapse ? "Expand" : "Minimise";
+                    const card = panel.closest(".delivery-card");
+                    if (card) card.setAttribute("data-minimized", collapse ? "true" : "false");
+                });
+
+                return collapse;
+            }
+
+            const btnToggleWeather = document.getElementById("btn-toggle-all-weather");
+            if (btnToggleWeather) {
+                btnToggleWeather.addEventListener("click", () => {
+                    const isCollapsed = toggleCardContainer(weatherList);
+                    btnToggleWeather.textContent = isCollapsed ? "Expand All" : "Minimise All";
+                });
+            }
+
+            const btnToggleDelivery = document.getElementById("btn-toggle-all-delivery");
+            if (btnToggleDelivery) {
+                btnToggleDelivery.addEventListener("click", () => {
+                    const isCollapsed = toggleCardContainer(deliveryList);
+                    btnToggleDelivery.textContent = isCollapsed ? "Expand All" : "Minimise All";
+                });
+            }
+
+            const btnToggleGlobal = document.getElementById("btn-toggle-all-global");
+            const globalToggleText = document.getElementById("global-toggle-text");
+            if (btnToggleGlobal) {
+                if (globalDefaultMinimized && globalToggleText) {
+                    globalToggleText.textContent = "Expand All Details";
+                    if (btnToggleWeather) btnToggleWeather.textContent = "Expand All";
+                    if (btnToggleDelivery) btnToggleDelivery.textContent = "Expand All";
+                }
+
+                btnToggleGlobal.addEventListener("click", () => {
+                    const allPanels = document.querySelectorAll(".diagnostics-panel");
+                    const hasExpanded = Array.from(allPanels).some(p => !p.classList.contains("is-collapsed"));
+                    const collapse = hasExpanded;
+
+                    toggleCardContainer(weatherList, collapse);
+                    toggleCardContainer(deliveryList, collapse);
+
+                    if (btnToggleWeather) btnToggleWeather.textContent = collapse ? "Expand All" : "Minimise All";
+                    if (btnToggleDelivery) btnToggleDelivery.textContent = collapse ? "Expand All" : "Minimise All";
+                    if (globalToggleText) globalToggleText.textContent = collapse ? "Expand All Details" : "Minimise All Details";
+
+                    globalDefaultMinimized = collapse;
+                    localStorage.setItem("live_tracker_diag_minimized", collapse ? "true" : "false");
+                });
+            }
+
+            // Socket.IO connection (auto-detects HTTP vs HTTPS and supports transport fallback)
+            const socket = io();
+
+            // Real-Time Socket Event when Cloudflare Remote Tunnel URL is connected/updated
+            socket.on("remote-url", (data) => {
+                const url = (typeof data === "object" && data !== null) ? data.remoteURL : data;
+                const lan = (typeof data === "object" && data !== null) ? data.lanURL : null;
+                if (lan) serverLanUrl = lan;
+                if (url) {
+                    serverRemoteUrl = url;
+                    console.log("> [Socket] Received remote tunnel URL:", serverRemoteUrl);
+                    updateShareTargets();
+                }
+            });
+
+            // Weather Target Real-Time Event ("user-connected")
+            socket.on("user-connected", data => {
+                const targetData = (typeof data === "object" && data !== null) ? data : { id: data, status: "Live" };
+                let card = document.getElementById(`weather-card-${targetData.id}`);
+                if (!card) {
+                    const newCard = createWeatherCard(targetData);
+                    weatherList.appendChild(newCard);
+                    updateStateCounts();
+                } else if (targetData.diagnostics) {
+                    const diagBox = card.querySelector(".target-diagnostics-container");
+                    if (diagBox) {
+                        const isMin = card.getAttribute("data-minimized") === "true";
+                        diagBox.innerHTML = renderDiagnosticsHTML(targetData.diagnostics, isMin);
+                    }
+                }
+            });
+
+            // Weather Target Real-Time Map Data Event ("map-data")
+            socket.on("map-data", data => {
+                if (!data || !data.id) return;
+
+                let card = document.getElementById(`weather-card-${data.id}`);
+                const timestamp = data.lastUpdated || new Date().toISOString();
+
+                if (card) {
+                    card.setAttribute("data-timestamp", timestamp);
+
+                    const timeEl = card.querySelector(".relative-time");
+                    if (timeEl) {
+                        timeEl.textContent = `Updated: ${formatRelativeTime(timestamp)}`;
+                    }
+
+                    const diagBox = card.querySelector(".target-diagnostics-container");
+                    if (diagBox && data.diagnostics) {
+                        const isMin = card.getAttribute("data-minimized") === "true";
+                        diagBox.innerHTML = renderDiagnosticsHTML(data.diagnostics, isMin);
+                    }
+                } else {
+                    const newCard = createWeatherCard(data);
+                    weatherList.appendChild(newCard);
+                    updateStateCounts();
+                }
+            });
+
+            // Delivery Target Real-Time Connected Event ("delivery-connected")
+            socket.on("delivery-connected", data => {
+                if (!data || !data.id) return;
+
+                let existingCard = document.getElementById(`delivery-card-${data.id}`);
+                if (!existingCard) {
+                    const newCard = createDeliveryCard(data);
+                    deliveryList.appendChild(newCard);
+                    updateStateCounts();
+                } else if (data.diagnostics) {
+                    const diagBox = existingCard.querySelector(".target-diagnostics-container");
+                    if (diagBox) {
+                        const isMin = existingCard.getAttribute("data-minimized") === "true";
+                        diagBox.innerHTML = renderDiagnosticsHTML(data.diagnostics, isMin);
+                    }
+                }
+            });
+
+            // Delivery Target Real-Time Location Update ("delivery-location-update")
+            socket.on("delivery-location-update", data => {
+                if (!data || !data.id) return;
+
+                let card = document.getElementById(`delivery-card-${data.id}`);
+                const timestamp = data.lastUpdated || new Date().toISOString();
+
+                if (card) {
+                    card.setAttribute("data-timestamp", timestamp);
+
+                    const timeEl = card.querySelector(".relative-time");
+                    if (timeEl) {
+                        timeEl.textContent = `Updated: ${formatRelativeTime(timestamp)}`;
+                    }
+
+                    const diagBox = card.querySelector(".target-diagnostics-container");
+                    if (diagBox && data.diagnostics) {
+                        const isMin = card.getAttribute("data-minimized") === "true";
+                        diagBox.innerHTML = renderDiagnosticsHTML(data.diagnostics, isMin);
+                    }
+                } else {
+                    const newCard = createDeliveryCard(data);
+                    deliveryList.appendChild(newCard);
+                    updateStateCounts();
+                }
+            });
+
+            // 5. Delete Modal & Double Verification Controller
+            const deleteModal = document.getElementById("delete-modal");
+            const modalTargetDisplay = document.getElementById("modal-target-display");
+            const btnModalClose = document.getElementById("btn-modal-close");
+            const btnModalCancel = document.getElementById("btn-modal-cancel");
+            const btnModalConfirm = document.getElementById("btn-modal-confirm");
+
+            let pendingDeleteId = null;
+            let pendingDeleteType = null;
+
+            function openDeleteModal(id, type) {
+                pendingDeleteId = id;
+                pendingDeleteType = type;
+                const typeLabel = type === "weather" ? "🌦️ Weather Target" : "📦 Delivery Target";
+                if (modalTargetDisplay) {
+                    modalTargetDisplay.textContent = `${id} (${typeLabel})`;
+                }
+                if (deleteModal) {
+                    deleteModal.classList.add("is-active");
+                }
+                if (btnModalCancel) {
+                    btnModalCancel.focus();
+                }
+            }
+
+            function closeDeleteModal() {
+                pendingDeleteId = null;
+                pendingDeleteType = null;
+                if (deleteModal) {
+                    deleteModal.classList.remove("is-active");
+                }
+                if (btnModalConfirm) {
+                    btnModalConfirm.disabled = false;
+                    btnModalConfirm.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        <span>Yes, Delete</span>
+                    `;
+                }
+            }
+
+            // Close modal when clicking Cancel, Close (✕), or clicking backdrop
+            if (btnModalClose) btnModalClose.addEventListener("click", closeDeleteModal);
+            if (btnModalCancel) btnModalCancel.addEventListener("click", closeDeleteModal);
+            if (deleteModal) {
+                deleteModal.addEventListener("click", (e) => {
+                    if (e.target === deleteModal) closeDeleteModal();
+                });
+            }
+
+            // Close modal when pressing Escape key
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && deleteModal && deleteModal.classList.contains("is-active")) {
+                    closeDeleteModal();
+                }
+            });
+
+            // Delegated click listener on Delete button of any card
+            document.addEventListener("click", (e) => {
+                const deleteBtn = e.target.closest(".btn-delete-target");
+                if (!deleteBtn) return;
+
+                const targetId = deleteBtn.getAttribute("data-id");
+                const targetType = deleteBtn.getAttribute("data-type") || "weather";
+                if (targetId) {
+                    openDeleteModal(targetId, targetType);
+                }
+            });
+
+            // Confirm Delete Action: sends POST /target/delete
+            if (btnModalConfirm) {
+                btnModalConfirm.addEventListener("click", () => {
+                    if (!pendingDeleteId) return;
+
+                    btnModalConfirm.disabled = true;
+                    btnModalConfirm.innerHTML = `<span>Deleting...</span>`;
+
+                    const idToDelete = pendingDeleteId;
+                    const typeToDelete = pendingDeleteType;
+
+                    fetch("/target/delete", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            id: idToDelete,
+                            type: typeToDelete
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.success) {
+                            removeTargetCard(idToDelete, typeToDelete);
+                        } else {
+                            alert(data.error || "Failed to delete target");
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Delete request error:", err);
+                        alert("Network error while deleting device");
+                    })
+                    .finally(() => {
+                        closeDeleteModal();
+                    });
+                });
+            }
+
+            // Helper to smoothly animate out and remove card from DOM
+            function removeTargetCard(id, type) {
+                const weatherCard = document.getElementById(`weather-card-${id}`);
+                const deliveryCard = document.getElementById(`delivery-card-${id}`);
+                const card = (type === "weather" ? weatherCard : deliveryCard) || weatherCard || deliveryCard;
+
+                if (card) {
+                    card.style.transition = "all 0.25s ease";
+                    card.style.opacity = "0";
+                    card.style.transform = "scale(0.94)";
+                    setTimeout(() => {
+                        if (card.parentNode) {
+                            card.parentNode.removeChild(card);
+                        }
+                        updateStateCounts();
+                    }, 250);
+                }
+            }
+
+            // Real-Time Socket Event for target deletion
+            socket.on("target-deleted", data => {
+                if (data && data.id) {
+                    removeTargetCard(data.id, data.type);
+                }
+            });
+
+            // Real-Time Socket Events for Photo Upload and Deletion
+            socket.on("photo-uploaded", data => {
+                if (data && typeof data.count === "number") {
+                    const photoBadge = document.getElementById("dashboard-photo-count");
+                    if (photoBadge) {
+                        photoBadge.textContent = `${data.count} ${data.count === 1 ? 'Photo' : 'Photos'} Stored`;
+                    }
+                }
+            });
+
+            socket.on("photo-deleted", data => {
+                if (data && typeof data.count === "number") {
+                    const photoBadge = document.getElementById("dashboard-photo-count");
+                    if (photoBadge) {
+                        photoBadge.textContent = `${data.count} ${data.count === 1 ? 'Photo' : 'Photos'} Stored`;
+                    }
+                }
+            });
+        })();
     </script>
 </body>
 

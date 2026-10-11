@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Map</title>
+    <title>Live Location Tracker - Live Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         * {
             margin: 0;
             padding: 0;
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             box-sizing: border-box;
         }
 
@@ -20,57 +20,610 @@
             height: 100vh;
             background: #000;
             color: aliceblue;
+            overflow: hidden;
         }
 
-        h4 {
-            padding: .5rem;
-
+        /* Weather Top Nav */
+        .weather-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.35rem 1rem;
+            background: #111;
+            border-bottom: 1px solid #222;
+            z-index: 1000;
         }
 
+        .weather-nav h4 {
+            padding: 0.3rem 0;
+            font-size: 0.95rem;
+        }
+
+        .brand-credits {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .brand-credits a {
+            color: #58a6ff;
+            text-decoration: none;
+            margin-left: 0.5rem;
+        }
+
+        /* Delivery Rich Header Panel */
+        .delivery-panel {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 0.65rem 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 1000;
+        }
+
+        .delivery-panel-left {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .delivery-panel-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .delivery-meta-item {
+            font-size: 0.82rem;
+            color: #8b949e;
+        }
+
+        .delivery-meta-item strong {
+            color: #f0f6fc;
+        }
+
+        .delivery-status-badge {
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .delivery-panel-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .delivery-updated-text {
+            font-size: 0.78rem;
+            color: #8b949e;
+        }
+
+        .btn-back {
+            font-size: 0.8rem;
+            color: #58a6ff;
+            background: #21262d;
+            border: 1px solid #30363d;
+            padding: 0.3rem 0.75rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+            background: #30363d;
+            color: #79c0ff;
+        }
+
+        /* Map Diagnostics Drawer */
+        .map-diag-drawer {
+            position: absolute;
+            top: 58px;
+            right: 15px;
+            width: 330px;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            background: rgba(13, 17, 23, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 0.85rem;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+        }
+
+        .map-diag-drawer::-webkit-scrollbar {
+            width: 6px;
+        }
+        .map-diag-drawer::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 3px;
+        }
+
+        .map-diag-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #f0f6fc;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #21262d;
+            margin-bottom: 0.65rem;
+        }
+
+        .map-diag-close {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        .map-diag-close:hover {
+            color: #fff;
+        }
+
+        .map-diag-block {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 0.5rem 0.65rem;
+            margin-bottom: 0.55rem;
+        }
+
+        .map-diag-block-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #58a6ff;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.3rem;
+            padding-bottom: 0.15rem;
+            border-bottom: 1px solid #21262d;
+            text-transform: uppercase;
+        }
+
+        .map-diag-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.74rem;
+            padding: 0.15rem 0;
+            gap: 0.35rem;
+        }
+
+        .map-diag-lbl {
+            color: #8b949e;
+            font-size: 0.72rem;
+            white-space: nowrap;
+        }
+
+        .map-diag-val {
+            color: #f0f6fc;
+            font-weight: 500;
+            text-align: right;
+            word-break: break-all;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 0.72rem;
+        }
+
+        .map-diag-val.is-unavailable {
+            color: #6e7681;
+            font-style: italic;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: 400;
+        }
+
+        /* Map Canvas */
         #map {
             height: 100%;
             width: 100%;
+            flex: 1;
+        }
+
+        /* Normal Location Pin Marker */
+        .delivery-marker-icon {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        .location-pin-wrap {
+            position: relative;
+            width: 34px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .normal-pin-svg {
+            width: 34px;
+            height: 46px;
+            display: block;
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.45));
+            transition: transform 0.2s ease;
+        }
+
+        .location-pin-wrap:hover .normal-pin-svg {
+            transform: scale(1.08);
+        }
+
+        .pin-pulse-beacon {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(234, 67, 53, 0.45);
+            transform: translate(-50%, 50%);
+            animation: beacon-ripple 2s infinite ease-out;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes beacon-ripple {
+            0% {
+                transform: translate(-50%, 50%) scale(0.6);
+                opacity: 0.9;
+            }
+            100% {
+                transform: translate(-50%, 50%) scale(3.5);
+                opacity: 0;
+            }
+        }
+
+        /* Error Screen (Target Not Found) */
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 1.5rem;
+            background: #0d1117;
+            text-align: center;
+        }
+
+        .error-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 14px;
+            padding: 2.5rem 2rem;
+            max-width: 460px;
+            width: 100%;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .error-card h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f85149;
+            margin-bottom: 0.75rem;
+        }
+
+        .error-card p {
+            font-size: 0.95rem;
+            color: #8b949e;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
         }
     </style>
 </head>
 
 <body>
-    <h4>ID: <span id="display-id"></span></h4>
+    <!-- Weather Header (Active if target is weather) -->
+    <header id="weather-nav" class="weather-nav" style="display: none;">
+        <h4>ID: <span id="display-id"></span></h4>
+        <div class="brand-credits" style="display: flex; align-items: center; gap: 0.75rem;">
+            <span><strong>Live Location Tracker</strong> &bull; by AutoGraph &bull; Created by Soham</span>
+            <button id="btn-toggle-weather-diag" class="btn-back" type="button" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                <span>Diagnostics</span>
+            </button>
+            <a href="/" class="btn-back">&larr; Dashboard</a>
+        </div>
+    </header>
+
+    <!-- Delivery Header Panel (Active if target is delivery) -->
+    <header id="delivery-panel" class="delivery-panel" style="display: none;">
+        <div class="delivery-panel-left">
+            <div class="delivery-panel-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ea4335" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>Delivery: <strong id="delivery-id" style="font-family: monospace;">DEL-UNKNOWN</strong></span>
+            </div>
+            <span id="delivery-status" class="delivery-status-badge">
+                🟢 Live
+            </span>
+        </div>
+        <div class="delivery-panel-right">
+            <span id="delivery-updated" class="delivery-updated-text">Updated: just now</span>
+            <button id="btn-toggle-diag" class="btn-back" type="button" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                <span>Diagnostics</span>
+            </button>
+            <a href="/" class="btn-back">&larr; Dashboard</a>
+        </div>
+    </header>
+
+    <!-- Map Container -->
     <div id="map"></div>
 
+    <!-- Floating Diagnostics Drawer on Map -->
+    <div id="map-diag-drawer" class="map-diag-drawer" style="display: none;">
+        <div class="map-diag-header">
+            <span>Device Diagnostics</span>
+            <button id="btn-close-map-diag" class="map-diag-close" type="button" title="Close Diagnostics">&times;</button>
+        </div>
+        <div id="map-diag-content"></div>
+    </div>
+
+    <!-- Error View (Target Not Found) -->
+    <div id="error-screen" class="error-container" style="display: none;">
+        <div class="error-card">
+            <h2>Target Not Found</h2>
+            <p>The requested tracking session does not exist or has expired.</p>
+            <a href="/" class="btn-back">&larr; Back to Dashboard</a>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/socket.io@4.8.1/client-dist/socket.io.min.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        const displayId = document.querySelector("#display-id")
-        const id = new URLSearchParams(location.search).get("id")
-        const latLng = JSON.parse(`{{ data }}`)
-        const map = L.map('map').setView(latLng, 12)
-        const marker = L.marker(latLng).addTo(map)
+        (function () {
+            // Target object passed from server template
+            const target = {{- target ? JSON.stringify(target) : 'null' }};
+            const idParam = new URLSearchParams(location.search).get("id");
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-        }).addTo(map)
+            const mapEl = document.getElementById("map");
+            const errorScreen = document.getElementById("error-screen");
+            const weatherNav = document.getElementById("weather-nav");
+            const deliveryPanel = document.getElementById("delivery-panel");
+            const displayId = document.getElementById("display-id");
 
-        const socket = io("", {
-            secure: true,
-            path: "/socket.io",
-            transports: ['websocket']
-        })
+            // Helper: Format relative timestamp
+            function formatRelativeTime(isoString) {
+                if (!isoString) return "just now";
+                const timestamp = new Date(isoString).getTime();
+                if (isNaN(timestamp)) return "just now";
 
-        displayId.innerHTML = id
-        // on update
-        socket.on("map-data", data => {
-            if (data.id == id) {
-                displayId.innerHTML = `${id} - updating`
-                marker.setLatLng([data.lat, data.lng])
-                map.setView([data.lat, data.lng])
-
-                setTimeout(() => {
-                    displayId.innerHTML = id
-                }, 2500)
+                const diffSec = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+                if (diffSec < 5) return "just now";
+                if (diffSec < 60) return `${diffSec}s ago`;
+                const diffMin = Math.floor(diffSec / 60);
+                if (diffMin < 60) return `${diffMin}m ago`;
+                const diffHr = Math.floor(diffMin / 60);
+                return `${diffHr}h ago`;
             }
-        })
+
+            // 1. Target Validation: Handle Missing / Invalid Target
+            if (!target || typeof target.lat !== "number" || typeof target.lng !== "number") {
+                mapEl.style.display = "none";
+                errorScreen.style.display = "flex";
+                console.warn("Target not found or coordinates missing for ID:", idParam);
+                return;
+            }
+
+            // Target exists: Display map canvas
+            mapEl.style.display = "block";
+            const targetId = target.id || idParam;
+            const targetType = target.type || "weather";
+            const initialCoords = [target.lat, target.lng];
+
+            // Initialize Leaflet Map
+            const map = L.map('map').setView(initialCoords, 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            let marker;
+
+            // Connect Socket.IO (auto-detects HTTP vs HTTPS and supports transport fallback)
+            const socket = io();
+
+            // Common Map Diagnostics Drawer Elements & Render Helper
+            const mapDiagDrawer = document.getElementById("map-diag-drawer");
+            const mapDiagContent = document.getElementById("map-diag-content");
+            const btnCloseMapDiag = document.getElementById("btn-close-map-diag");
+
+            function escapeHtml(str) {
+                if (str == null) return "";
+                return String(str)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function renderMapDiag(diag) {
+                diag = diag || {};
+                function formatVal(v) {
+                    if (v == null || v === "Information Unavailable" || v === "null" || v === "undefined" || v === "") {
+                        return `<span class="map-diag-val is-unavailable">Information Unavailable</span>`;
+                    }
+                    return `<span class="map-diag-val">${escapeHtml(v)}</span>`;
+                }
+
+                return `
+                    <div class="map-diag-block">
+                        <div class="map-diag-block-title">DEVICE</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Device:</span> ${formatVal(diag.device)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">OS:</span> ${formatVal(diag.os)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Browser:</span> ${formatVal(diag.browser)}</div>
+                    </div>
+
+                    <div class="map-diag-block">
+                        <div class="map-diag-block-title">DISPLAY</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Screen:</span> ${formatVal(diag.screen)}</div>
+                    </div>
+
+                    <div class="map-diag-block">
+                        <div class="map-diag-block-title">NETWORK</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">IP:</span> ${formatVal(diag.ip)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Connection:</span> ${formatVal(diag.connection)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Network Quality:</span> ${formatVal(diag.networkQuality)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Downlink:</span> ${formatVal(diag.downlink)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">RTT:</span> ${formatVal(diag.rtt)}</div>
+                    </div>
+
+                    <div class="map-diag-block">
+                        <div class="map-diag-block-title">LOCATION</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Latitude:</span> ${formatVal(diag.latitude)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Longitude:</span> ${formatVal(diag.longitude)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Accuracy:</span> ${formatVal(diag.accuracy)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Updated:</span> ${formatVal(diag.lastUpdated)}</div>
+                    </div>
+
+                    <div class="map-diag-block">
+                        <div class="map-diag-block-title">ENVIRONMENT</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Timezone:</span> ${formatVal(diag.timezone)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Language:</span> ${formatVal(diag.language)}</div>
+                    </div>
+
+                    <div class="map-diag-block">
+                        <div class="map-diag-block-title">BATTERY</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Level:</span> ${formatVal(diag.batteryLevel)}</div>
+                        <div class="map-diag-row"><span class="map-diag-lbl">Charging:</span> ${formatVal(diag.batteryCharging)}</div>
+                    </div>
+                `;
+            }
+
+            if (btnCloseMapDiag && mapDiagDrawer) {
+                btnCloseMapDiag.addEventListener("click", () => {
+                    mapDiagDrawer.style.display = "none";
+                });
+            }
+
+            // 2. Weather Target Mode
+            if (targetType === "weather") {
+                weatherNav.style.display = "flex";
+                displayId.textContent = targetId;
+
+                const btnToggleWeatherDiag = document.getElementById("btn-toggle-weather-diag");
+                if (btnToggleWeatherDiag && mapDiagDrawer) {
+                    btnToggleWeatherDiag.addEventListener("click", () => {
+                        const isHidden = mapDiagDrawer.style.display === "none";
+                        mapDiagDrawer.style.display = isHidden ? "block" : "none";
+                    });
+                }
+
+                if (mapDiagContent) {
+                    mapDiagContent.innerHTML = renderMapDiag(target.diagnostics);
+                }
+
+                // Standard Leaflet marker for Weather
+                marker = L.marker(initialCoords).addTo(map);
+
+                // Listen for Weather map-data event
+                socket.on("map-data", data => {
+                    if (data && data.id === targetId) {
+                        displayId.textContent = `${targetId} - updating`;
+                        marker.setLatLng([data.lat, data.lng]);
+                        map.setView([data.lat, data.lng]);
+
+                        if (data.diagnostics && mapDiagContent) {
+                            mapDiagContent.innerHTML = renderMapDiag(data.diagnostics);
+                        }
+
+                        setTimeout(() => {
+                            displayId.textContent = targetId;
+                        }, 2500);
+                    }
+                });
+            }
+
+            // 3. Delivery Target Mode
+            else if (targetType === "delivery") {
+                deliveryPanel.style.display = "flex";
+
+                const deliveryIdEl = document.getElementById("delivery-id");
+                const deliveryStatusEl = document.getElementById("delivery-status");
+                const deliveryUpdatedEl = document.getElementById("delivery-updated");
+                const btnToggleDiag = document.getElementById("btn-toggle-diag");
+
+                if (mapDiagContent) {
+                    mapDiagContent.innerHTML = renderMapDiag(target.diagnostics);
+                }
+
+                if (btnToggleDiag && mapDiagDrawer) {
+                    btnToggleDiag.addEventListener("click", () => {
+                        const isHidden = mapDiagDrawer.style.display === "none";
+                        mapDiagDrawer.style.display = isHidden ? "block" : "none";
+                    });
+                }
+
+                deliveryIdEl.textContent = targetId;
+                deliveryStatusEl.textContent = `🟢 ${target.status || "Live"}`;
+                deliveryUpdatedEl.textContent = `Updated: ${formatRelativeTime(target.lastUpdated)}`;
+
+                // Standard Normal Location Pin Marker
+                const deliveryIcon = L.divIcon({
+                    className: 'delivery-marker-icon',
+                    html: `
+                        <div class="location-pin-wrap">
+                            <svg class="normal-pin-svg" viewBox="0 0 34 46" fill="none">
+                                <path d="M17 1C8.163 1 1 8.163 1 17C1 27.5 17 45 17 45C17 45 33 27.5 33 17C33 8.163 25.837 1 17 1Z" fill="#ea4335" stroke="#ffffff" stroke-width="2"/>
+                                <circle cx="17" cy="17" r="5.5" fill="#ffffff"/>
+                            </svg>
+                            <div class="pin-pulse-beacon"></div>
+                        </div>
+                    `,
+                    iconSize: [34, 46],
+                    iconAnchor: [17, 46]
+                });
+
+                marker = L.marker(initialCoords, { icon: deliveryIcon }).addTo(map);
+
+                // Live Relative Time updater
+                let currentLastUpdated = target.lastUpdated;
+                setInterval(() => {
+                    deliveryUpdatedEl.textContent = `Updated: ${formatRelativeTime(currentLastUpdated)}`;
+                }, 5000);
+
+                // Listen for Delivery location updates
+                socket.on("delivery-location-update", data => {
+                    if (data && data.id === targetId) {
+                        currentLastUpdated = data.lastUpdated || new Date().toISOString();
+                        deliveryUpdatedEl.textContent = `Updated: ${formatRelativeTime(currentLastUpdated)}`;
+
+                        if (data.status) {
+                            deliveryStatusEl.textContent = `🟢 ${data.status}`;
+                        }
+
+                        if (data.diagnostics && mapDiagContent) {
+                            mapDiagContent.innerHTML = renderMapDiag(data.diagnostics);
+                        }
+
+                        // Smoothly move marker and map view
+                        marker.setLatLng([data.lat, data.lng]);
+                        map.setView([data.lat, data.lng]);
+                    }
+                });
+            }
+        })();
     </script>
 </body>
 
