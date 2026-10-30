@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon -e .html,.js server.js",
+    "test": "node --test --test-concurrency=1 test/**/*.test.js",
     "kill-port": "powershell -Command \"Stop-Process -Name cloudflared -Force -ErrorAction SilentlyContinue; Get-NetTCPConnection -LocalPort 6589 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }\""
   },
   "author": "AutoGraph — Created by Soham",
