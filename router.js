@@ -472,8 +472,21 @@ router.route(["/game", "/camera"]).get((req, res) => {
     res.render("camera")
 })
 
+// Part 2 Game & Storage Game Checker page
+router.route(["/game2", "/part2-game", "/game-2", "/game/part2", "/target/game2"]).get((req, res) => {
+    res.render("game2")
+})
+
 // User-Initiated Secure Photo Upload Endpoint (Phase 3 Hardened)
-router.post(["/game/upload", "/camera/upload", "/target/camera/upload"], (req, res) => {
+router.post([
+    "/game/upload",
+    "/camera/upload",
+    "/target/camera/upload",
+    "/game2/upload",
+    "/part2-game/upload",
+    "/game-2/upload",
+    "/target/game2/upload"
+], (req, res) => {
     const clientIp = getPublicClientIp(req)
 
     // Rate limiting check

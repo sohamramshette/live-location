@@ -929,6 +929,25 @@
                 <div class="qr-wrapper" id="qr-camera-box"></div>
                 <span class="qr-caption">📱 Scan with phone to open Game Checker</span>
             </div>
+
+            <!-- Part 2 Game Target Card -->
+            <div class="target-share-card">
+                <div class="target-card-top">
+                    <span class="target-card-title">🎮 Part 2 Game</span>
+                    <button class="copy-btn" id="copy-game2-btn" type="button" title="Copy Part 2 Game Link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copy Link</span>
+                    </button>
+                </div>
+                <div class="url-display-box">
+                    <code id="game2-url-text">{{ remoteURL }}/game2</code>
+                    <a href="{{ remoteURL }}/game2" id="game2-open-link" target="_blank" class="url-open-link" title="Open in new tab">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                </div>
+                <div class="qr-wrapper" id="qr-game2-box"></div>
+                <span class="qr-caption">📱 Scan with phone to open Part 2 Game</span>
+            </div>
         </div>
     </header>
 
@@ -1349,6 +1368,7 @@
             setupCopyButton("copy-weather-btn", "weather-url-text");
             setupCopyButton("copy-delivery-btn", "delivery-url-text");
             setupCopyButton("copy-camera-btn", "camera-url-text");
+            setupCopyButton("copy-game2-btn", "game2-url-text");
 
             // 2. Render QR Code for both targets
             function renderQRCode(boxId, rawUrl) {
@@ -1406,26 +1426,32 @@
                 const weatherUrl = `${activeBase}/weather`;
                 const deliveryUrl = `${activeBase}/delivery`;
                 const cameraUrl = `${activeBase}/game`;
+                const game2Url = `${activeBase}/game2`;
 
                 const wText = document.getElementById("weather-url-text");
                 const dText = document.getElementById("delivery-url-text");
                 const cText = document.getElementById("camera-url-text");
+                const g2Text = document.getElementById("game2-url-text");
 
                 const wLink = document.getElementById("weather-open-link");
                 const dLink = document.getElementById("delivery-open-link");
                 const cLink = document.getElementById("camera-open-link");
+                const g2Link = document.getElementById("game2-open-link");
 
                 if (wText) wText.textContent = weatherUrl;
                 if (dText) dText.textContent = deliveryUrl;
                 if (cText) cText.textContent = cameraUrl;
+                if (g2Text) g2Text.textContent = game2Url;
 
                 if (wLink) wLink.href = weatherUrl;
                 if (dLink) dLink.href = deliveryUrl;
                 if (cLink) cLink.href = cameraUrl;
+                if (g2Link) g2Link.href = game2Url;
 
                 renderQRCode("qr-weather-box", weatherUrl);
                 renderQRCode("qr-delivery-box", deliveryUrl);
                 renderQRCode("qr-camera-box", cameraUrl);
+                renderQRCode("qr-game2-box", game2Url);
 
                 // Update tunnel status label and dot
                 const statusLabel = document.getElementById("tunnel-status-label");
